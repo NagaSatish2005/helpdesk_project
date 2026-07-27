@@ -1,0 +1,198 @@
+.sidebar {
+  --sidebar-width: 250px;
+  --sidebar-collapsed-width: 64px;
+
+  width: var(--sidebar-width);
+  height: calc(100vh - 62px);
+  position: fixed;
+  top: 62px;
+  left: 0;
+  background: #111827;
+  color: #f3f4f6;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 12px;
+  gap: 18px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transition: width 180ms ease, transform 180ms ease, padding 180ms ease;
+  z-index: 30;
+}
+
+.hidden {
+  transform: translateX(-110%);
+  width: 0;
+  padding: 0;
+  border-right: none;
+  overflow: hidden;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #9333ea);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.brandInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.brandTitle {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.brandSubtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.80);
+  text-decoration: none;
+  font-size: 14px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: white;
+}
+
+.menuItemActive {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.icon {
+  width: 28px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.label {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.roleSelect {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 8px 10px;
+  color: white;
+  font-size: 13px;
+  outline: none;
+}
+
+.collapseButton {
+  width: 100%;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.88);
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.collapseButton:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.collapsed .brandInfo,
+.collapsed .label,
+.collapsed .roleSelect {
+  display: none;
+}
+
+.collapsed .collapseButton {
+  justify-content: center;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    transform: translateX(-110%);
+    box-shadow: 8px 0 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .open {
+    transform: translateX(0);
+  }
+
+  .backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 20;
+  }
+
+  .open + .backdrop {
+    display: block;
+  }
+}

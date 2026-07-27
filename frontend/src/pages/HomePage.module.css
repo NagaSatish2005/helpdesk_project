@@ -1,0 +1,58 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient( circle at 50% 80%, rgba(102,51,153,0.45), transparent 20%), linear-gradient(180deg,#071047 0%, #0b1b3a 40%, #0e0830 100%);
+  color: #fff;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  /* make this element full-bleed so it spans the entire viewport width
+     even when it's rendered inside a centered `.container` */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+.nav {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 24px 48px;
+}
+
+.logo { display:flex; align-items:center }
+.logoImage { height:45px; display:block }
+.links a { color: rgba(255,255,255,0.85); margin-left:16px; text-decoration:none }
+.links a.signup { background:#2f855a; padding:8px 12px; border-radius:6px; color:#fff }
+
+.hero {
+  max-width:980px;
+  margin: 4rem auto 6rem auto;
+  text-align:center;
+  padding: 0 24px;
+}
+
+.title {
+  font-size:64px;
+  line-height:1.02;
+  margin:0 0 18px 0;
+  font-weight:700;
+}
+
+.subtitle {
+  color: rgba(255,255,255,0.87);
+  max-width:720px;
+  margin: 0 auto 28px auto;
+  font-size:18px;
+}
+
+.cta { display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap }
+.email { padding:14px 16px; border-radius:8px; border: none; min-width:320px; max-width:420px; font-size:16px }
+.primary { background:#2f855a; color:#fff; padding:12px 18px; border-radius:8px; border:none; font-weight:600 }
+.secondary { background:transparent; border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px 18px; border-radius:8px }
+
+.footerIllustration { height:220px; width:100%; background: radial-gradient(circle at 50% 30%, rgba(137,94,255,0.35), transparent 30%), linear-gradient(180deg, rgba(255,255,255,0.02), transparent); margin-top:auto }
+
+@media (max-width:720px){
+  .title { font-size:34px }
+  .email { min-width:120px; max-width:240px }
+}

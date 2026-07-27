@@ -1,0 +1,140 @@
+/* Reports page styling */
+
+.container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #1f2937;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  margin: 0 0 6px 0;
+  font-size: 1.8rem;
+}
+
+.header p {
+  margin: 0;
+  color: #4b5563;
+  max-width: 540px;
+}
+
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.controls label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #374151;
+  min-width: 160px;
+}
+
+.controls select {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.controls select:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
+}
+
+.exportGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.exportButton {
+  background: #2563eb;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.exportButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.3);
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.card h2 {
+  margin: 0 0 6px 0;
+  font-size: 1.1rem;
+}
+
+.cardSubtext {
+  margin: 0 0 14px 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.chartContainer {
+  min-height: 220px;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.summaryValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.summaryLabel {
+  margin-top: 4px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+@media (max-width: 720px) {
+  .summaryGrid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+
+  .header {
+    align-items: flex-start;
+  }
+
+  .controls {
+    align-items: flex-start;
+  }
+}
