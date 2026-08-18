@@ -1,0 +1,72 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.alertWrap {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rememberWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+}
+
+.rememberLabel {
+  font-size: 14px;
+  color: #111827;
+}
+
+.forgotWrap {
+  margin-left: auto;
+}
+
+.forgotLink {
+  font-size: 14px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.forgotLink:focus,
+.forgotLink:hover {
+  text-decoration: underline;
+}
+
+.actions {
+  margin-top: 6px;
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 8px;
+    gap: 10px;
+    max-width: 100%;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .forgotWrap {
+    margin-left: 0;
+    text-align: right;
+  }
+}

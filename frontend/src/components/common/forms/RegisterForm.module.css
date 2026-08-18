@@ -1,0 +1,40 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.alertWrap {
+  width: 100%;
+}
+
+.actions {
+  margin-top: 6px;
+}
+
+.footer {
+  margin-top: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.loginLink {
+  color: #2563eb;
+  text-decoration: none;
+  margin-left: 6px;
+}
+
+.loginLink:focus,
+.loginLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 8px;
+    gap: 10px;
+    max-width: 100%;
+  }
+}

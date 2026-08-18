@@ -1,0 +1,84 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.alertWrap {
+  width: 100%;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.required {
+  color: #dc2626;
+  margin-left: 4px;
+}
+
+.textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #111827;
+  background: #ffffff;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  outline: none;
+  resize: vertical;
+}
+
+.textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.inputError {
+  border-color: #dc2626;
+}
+
+.errorMessage {
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+
+.cancelButton {
+  background: transparent;
+}
+
+@media (min-width: 720px) {
+  .actions {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (max-width: 719px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

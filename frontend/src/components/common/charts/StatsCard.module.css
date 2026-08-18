@@ -1,0 +1,123 @@
+.card {
+  padding: 12px 16px;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.iconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.iconPlaceholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+
+.trendWrap {
+  display: flex;
+  align-items: center;
+}
+
+.trendValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trendIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.trendText {
+  line-height: 1;
+}
+
+.trend_up {
+  color: #16a34a; /* green */
+}
+
+.trend_down {
+  color: #dc2626; /* red */
+}
+
+.trend_neutral {
+  color: #6b7280; /* gray */
+}
+
+.title {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.trendLabel {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Variants affect the icon/accent only */
+.variant_primary .iconWrap { background: linear-gradient(135deg,#eff6ff,#e0f2fe); color: #2563eb; }
+.variant_success .iconWrap { background: linear-gradient(135deg,#ecfdf5,#d1fae5); color: #16a34a; }
+.variant_warning .iconWrap { background: linear-gradient(135deg,#fff7ed,#ffedd5); color: #f59e0b; }
+.variant_danger .iconWrap { background: linear-gradient(135deg,#fff1f2,#fee2e2); color: #dc2626; }
+.variant_info .iconWrap { background: linear-gradient(135deg,#eef2ff,#e0e7ff); color: #4f46e5; }
+.variant_secondary .iconWrap { background: #f3f4f6; color: #374151; }
+
+/* clickable appearance */
+.card[role="button"] {
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.card[role="button"]:hover {
+  transform: translateY(-4px);
+}
+.card[role="button"]:focus {
+  outline: 2px solid rgba(37,99,235,0.18);
+  outline-offset: 2px;
+}
+
+/* Skeleton styles */
+.skeleton { display:flex; flex-direction:column; gap:8px; }
+.skelHeader { display:flex; justify-content:space-between; align-items:center }
+.skelIcon { width:44px; height:44px; border-radius:10px; background:#e6e7eb }
+.skelTrend { width:48px; height:16px; border-radius:6px; background:#e6e7eb }
+.skelTitle { width:40%; height:12px; border-radius:6px; background:#e6e7eb }
+.skelValue { width:60%; height:28px; border-radius:6px; background:#e6e7eb }
+
+@media (max-width: 520px) {
+  .value { font-size: 20px }
+  .iconWrap { width:40px; height:40px }
+}

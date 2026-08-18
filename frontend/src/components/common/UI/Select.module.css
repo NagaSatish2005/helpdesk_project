@@ -1,0 +1,73 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.required {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+.select {
+  width: 100%;
+  appearance: none;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 40px 10px 12px;
+  font-size: 14px;
+  color: #111827;
+  background-color: #ffffff;
+  background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%), linear-gradient(135deg, #6b7280 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+  outline: none;
+  cursor: pointer;
+}
+
+.select:hover:not(:disabled) {
+  border-color: #93c5fd;
+}
+
+.select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  transform: translateY(-1px);
+}
+
+.selectError {
+  border-color: #dc2626;
+}
+
+.selectError:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.selectDisabled {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.message {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.errorMessage {
+  color: #dc2626;
+}

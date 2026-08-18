@@ -1,6 +1,7 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
+import Layout from "../components/common/Layout/Layout";
 import HomePage from "../pages/HomePage";
 import LoginPage from "../pages/auth/LoginPage";
 import SignUpPage from "../pages/auth/SignUpPage";
@@ -25,36 +26,31 @@ import ServerErrorPage from '../pages/errorpages/ServerErrorPage'
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public Pages */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        {/* Dashboards */}
+      <Route element={<Layout />}>
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/staff" element={<StaffDashboard />} />
         <Route path="/admin" element={<AdminDashboard />} />
-        
-        {/* Tickets */}
-				<Route path="/create-ticket" element={<CreateTicketPage />} />
-				<Route path="/tickets" element={<TicketListPage />} />
-				<Route path="/my-tickets" element={<MyTicketPage />} />
-				<Route path="/tickets/:id" element={<TicketDetailPage />} />
 
-        {/* Admin Pages */}
-				<Route path="/users" element={<UserPage />} />
-				<Route path="/departments" element={<DepartmentsPage />} />
-				<Route path="/profile" element={<ProfilePage />} />
-				<Route path="/profile/edit" element={<EditProfilePage />} />
-				<Route path="/settings" element={<SettingsPage />} />
-				<Route path="/reports" element={<ReportsPage />} />
+        <Route path="/create-ticket" element={<CreateTicketPage />} />
+        <Route path="/tickets" element={<TicketListPage />} />
+        <Route path="/my-tickets" element={<MyTicketPage />} />
+        <Route path="/tickets/:id" element={<TicketDetailPage />} />
 
-        {/* Error pages */}
-        <Route path="/server-error" element={<ServerErrorPage />} />
+        <Route path="/users" element={<UserPage />} />
+        <Route path="/departments" element={<DepartmentsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/edit" element={<EditProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+      </Route>
 
-        {/* Redirect unknown routes */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <Route path="/server-error" element={<ServerErrorPage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   );
 }
