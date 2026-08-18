@@ -1,0 +1,66 @@
+.wrapper {
+  width: 100%;
+}
+
+.loadingWrap {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 0;
+}
+
+.notFound {
+  padding: 24px;
+  color: #6b7280;
+}
+
+.backAction { margin-top: 12px }
+
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:16px;
+  margin-bottom:12px;
+}
+
+.headerLeft { display:flex; gap:12px; align-items:flex-start }
+
+.backButton { margin-right:8px }
+
+.ident { display:flex; flex-direction:column }
+
+.number { font-size:13px; color:#6b7280 }
+
+.title { font-size:20px; margin:0; color:#111827 }
+
+.headerRight { display:flex; gap:8px; align-items:center }
+
+.contentArea { display:grid; grid-template-columns: 1fr 320px; gap:16px }
+
+.main { display:flex; flex-direction:column; gap:12px }
+
+.sectionTitle { font-size:14px; font-weight:700; margin-bottom:8px }
+
+.description { white-space:pre-wrap; color:#374151 }
+
+.metaRow { display:flex; gap:12px; flex-wrap:wrap }
+
+.metaItem { background:transparent }
+
+.sidebar { display:flex; flex-direction:column; gap:12px }
+
+.metaList { display:flex; flex-direction:column; gap:8px }
+
+.metaRowItem { display:flex; flex-direction:column; gap:4px }
+
+.metaLabel { font-size:12px; color:#6b7280 }
+
+.metaValue { font-size:14px; color:#111827 }
+
+.actions { display:flex; gap:8px; flex-direction:column }
+
+@media (max-width: 880px) {
+  .contentArea { grid-template-columns: 1fr; }
+  .sidebar { order: 2 }
+}

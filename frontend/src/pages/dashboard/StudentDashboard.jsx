@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './StudentDashboard.module.css'
 import {
 	Chart as ChartJS,
@@ -14,6 +15,7 @@ import { Pie } from 'react-chartjs-2'
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
 export default function StudentDashboard() {
+	const navigate = useNavigate()
 	// sample data; in a real application these would be fetched from an API
 	const summary = {
 		total: 32,
@@ -106,8 +108,8 @@ export default function StudentDashboard() {
 			</div>
 
 			<div className={styles.actions}>
-				<button onClick={() => alert('Raise issue')}>Raise Issue</button>
-				<button onClick={() => alert('Track issue')}>Track Issue</button>
+				<button onClick={() => navigate('/create-ticket')} aria-label="Raise issue">Raise Issue</button>
+				<button onClick={() => navigate('/my-tickets')} aria-label="Track issue">Track Issue</button>
 			</div>
 		</div>
 	)
