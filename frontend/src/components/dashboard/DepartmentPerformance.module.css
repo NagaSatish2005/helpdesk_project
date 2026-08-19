@@ -1,0 +1,48 @@
+.section {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.tableWrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.tableWrap :global(table) {
+  min-width: 720px;
+}
+
+.chartWrap {
+  min-width: 0;
+  width: 100%;
+}
+
+.loading {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty {
+  margin: 0;
+  padding: 28px 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .title {
+    font-size: 16px;
+  }
+
+  .chartWrap :global(.wrapper) {
+    margin-inline: -8px;
+  }
+}
