@@ -1,28 +1,14 @@
 import React, { useMemo, useState } from 'react'
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from 'chart.js'
-import { Bar, Line, Pie } from 'react-chartjs-2'
+import jsPDF from 'jspdf'
+import * as XLSX from 'xlsx'
+import Alert from '../../components/common/UI/Alert'
+import Button from '../../components/common/UI/Button'
+import Select from '../../components/common/UI/Select'
+import BarChart from '../../components/common/charts/BarChart'
+import LineChart from '../../components/common/charts/LineChart'
+import PieChart from '../../components/common/charts/PieChart'
+import StatsCard from '../../components/common/charts/StatsCard'
 import styles from './ReportsPage.module.css'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  PointElement,
-  ArcElement,
-  Tooltip,
-  Legend
-)
 
 const sampleTickets = [
   { id: 'T-001', category: 'IT', department: 'Support', priority: 'High', status: 'Closed', created: '2026-02-22', resolved: '2026-02-24', staff: 'Alicia', resolutionTimeMins: 240 },
@@ -46,16 +32,12 @@ const exportOptions = [
   { key: 'xlsx', label: 'Export XLSX' },
 ]
 
-function toLabel(value) {
-  return value
-}
-
 function filterByDateRange(tickets, rangeKey) {
   if (rangeKey === 'all') return tickets
   const days = rangeKey === '30d' ? 30 : 90
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - days)
-  return tickets.filter((ticket) => new Date(ticket.created) >= cutoff)
+  return tickets.filter((ticket) => ticket?.created && new Date(ticket.created) >= cutoff)
 }
 
 function aggregateCountByKey(items, key) {
@@ -66,10 +48,137 @@ function aggregateCountByKey(items, key) {
   }, {})
 }
 
+const reportColumns = [
+  ['Ticket ID', 'id'],
+  ['Category', 'category'],
+  ['Department', 'department'],
+  ['Priority', 'priority'],
+  ['Status', 'status'],
+  ['Created', 'created'],
+  ['Resolved', 'resolved'],
+  ['Staff', 'staff'],
+  ['Resolution Time (minutes)', 'resolutionTimeMins'],
+]
+
+function getReportRows(tickets) {
+  return tickets.map((ticket) => Object.fromEntries(
+    reportColumns.map(([header, key]) => [header, ticket?.[key] ?? ''])
+  ))
+}
+
+function getExportDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function getExportFilename(extension) {
+  return `helpdesk-report-${getExportDate()}.${extension}`
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+function exportCsv(tickets) {
+  const rows = getReportRows(tickets)
+  const headers = reportColumns.map(([header]) => header)
+  const escapeCell = (value) => `"${String(value).replace(/"/g, '""')}"`
+  const csv = [
+    headers,
+    ...rows.map((row) => headers.map((header) => row[header])),
+  ]
+    .map((row) => row.map(escapeCell).join(','))
+    .join('\r\n')
+
+  downloadBlob(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' }), getExportFilename('csv'))
+}
+
+function exportXlsx(tickets) {
+  const worksheet = XLSX.utils.json_to_sheet(getReportRows(tickets))
+  worksheet['!cols'] = reportColumns.map(([header]) => ({ wch: Math.max(header.length + 2, 16) }))
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Ticket Report')
+  XLSX.writeFile(workbook, getExportFilename('xlsx'))
+}
+
+function exportPdf(tickets, filters) {
+  const doc = new jsPDF({ orientation: 'landscape' })
+  const rows = getReportRows(tickets)
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 14
+  const columns = [
+    ['ID', 'Ticket ID', 20],
+    ['Category', 'Category', 29],
+    ['Department', 'Department', 29],
+    ['Priority', 'Priority', 24],
+    ['Status', 'Status', 22],
+    ['Created', 'Created', 27],
+    ['Staff', 'Staff', 28],
+    ['Resolution (min)', 'Resolution Time (minutes)', 38],
+  ]
+
+  const drawHeader = (y) => {
+    doc.setFillColor(37, 99, 235)
+    doc.setTextColor(255, 255, 255)
+    doc.rect(margin, y - 5, pageWidth - margin * 2, 8, 'F')
+    doc.setFont(undefined, 'bold')
+    let x = margin + 2
+    columns.forEach(([label, , width]) => {
+      doc.text(label, x, y)
+      x += width
+    })
+    doc.setFont(undefined, 'normal')
+    doc.setTextColor(31, 41, 55)
+  }
+
+  doc.setFontSize(18)
+  doc.setTextColor(17, 24, 39)
+  doc.text('Helpdesk Report', margin, 18)
+  doc.setFontSize(10)
+  doc.text(`Export date: ${getExportDate()}`, margin, 26)
+  doc.text(`Date range: ${filters.dateRange} | Department: ${filters.department} | Staff: ${filters.staff}`, margin, 33)
+  doc.text(`Total tickets: ${tickets.length} | Closed: ${tickets.filter((ticket) => ticket.status === 'Closed').length} | Open: ${tickets.filter((ticket) => ticket.status !== 'Closed').length}`, margin, 40)
+
+  doc.setFontSize(8)
+  let y = 54
+  drawHeader(y)
+  y += 9
+
+  rows.forEach((row) => {
+    if (y > pageHeight - 16) {
+      doc.addPage()
+      y = 16
+      drawHeader(y)
+      y += 9
+    }
+
+    let x = margin + 2
+    columns.forEach(([, key, width]) => {
+      const value = row[key] === '' ? '-' : String(row[key])
+      doc.text(value.slice(0, 24), x, y)
+      x += width
+    })
+    doc.setDrawColor(229, 231, 235)
+    doc.line(margin, y + 3, pageWidth - margin, y + 3)
+    y += 8
+  })
+
+  doc.save(getExportFilename('pdf'))
+}
+
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('30d')
   const [department, setDepartment] = useState('All')
   const [staff, setStaff] = useState('All')
+  const [feedback, setFeedback] = useState(null)
+  const [exporting, setExporting] = useState(null)
 
   const filteredTickets = useMemo(() => {
     let data = filterByDateRange(sampleTickets, dateRange)
@@ -94,52 +203,48 @@ export default function ReportsPage() {
 
   const categoryData = useMemo(() => {
     const counts = aggregateCountByKey(filteredTickets, 'category')
-    return {
-      labels: Object.keys(counts).map(toLabel),
-      datasets: [
-        {
-          label: 'Tickets by category',
-          data: Object.values(counts),
-          backgroundColor: ['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a855f7'],
-        },
-      ],
-    }
+    return Object.entries(counts).map(([category, count]) => ({ category, count }))
   }, [filteredTickets])
 
   const priorityData = useMemo(() => {
     const counts = aggregateCountByKey(filteredTickets, 'priority')
-    return {
-      labels: Object.keys(counts).map(toLabel),
-      datasets: [
-        {
-          label: 'Tickets by priority',
-          data: Object.values(counts),
-          backgroundColor: ['#f97316', '#facc15', '#22c55e'],
-        },
-      ],
-    }
+    return Object.entries(counts).map(([priority, count]) => ({ priority, count }))
   }, [filteredTickets])
 
   const resolutionTimes = useMemo(() => {
     const completed = filteredTickets.filter((t) => t.resolutionTimeMins != null)
-    const mapped = completed.map((t) => ({ label: t.id, value: t.resolutionTimeMins }))
-    return {
-      labels: mapped.map((m) => m.label),
-      datasets: [
-        {
-          label: 'Resolution time (minutes)',
-          data: mapped.map((m) => m.value),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.35)',
-          fill: true,
-          tension: 0.2,
-        },
-      ],
-    }
+    return completed.map((ticket) => ({ ticket: ticket.id, minutes: Number(ticket.resolutionTimeMins) || 0 }))
   }, [filteredTickets])
 
-  const handleExport = (key) => {
-    alert(`Exporting report as ${key.toUpperCase()} (demo only).`)
+  const staffPerformance = useMemo(() => {
+    const counts = aggregateCountByKey(filteredTickets.filter((ticket) => ticket.status === 'Closed'), 'staff')
+    return Object.entries(counts).map(([staffName, count]) => ({ staff: staffName, resolved: count }))
+  }, [filteredTickets])
+
+  const departmentBreakdown = useMemo(() => {
+    const counts = aggregateCountByKey(filteredTickets, 'department')
+    return Object.entries(counts).map(([departmentName, count]) => ({ department: departmentName, tickets: count }))
+  }, [filteredTickets])
+
+  const handleExport = async (key) => {
+    if (exporting) return
+
+    setExporting(key)
+    setFeedback(null)
+
+    try {
+      await Promise.resolve()
+      const filters = { dateRange, department, staff }
+      if (key === 'csv') exportCsv(filteredTickets)
+      if (key === 'xlsx') exportXlsx(filteredTickets)
+      if (key === 'pdf') exportPdf(filteredTickets, filters)
+      setFeedback({ title: 'Export complete', message: `The ${key.toUpperCase()} report was downloaded.`, type: 'success' })
+    } catch (error) {
+      console.error(`Failed to export ${key} report`, error)
+      setFeedback({ title: 'Export failed', message: `The ${key.toUpperCase()} report could not be downloaded. Please try again.`, type: 'error' })
+    } finally {
+      setExporting(null)
+    }
   }
 
   return (
@@ -150,144 +255,111 @@ export default function ReportsPage() {
           <p>View ticket analytics with filters, charts, and export options.</p>
         </div>
         <div className={styles.controls}>
-          <label>
-            Date range
-            <select value={dateRange} onChange={(e) => setDateRange(e.target.value)}>
-              {dateOptions.map(({ key, label }) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Date range"
+            value={dateRange}
+            options={dateOptions.map(({ key, label }) => ({ value: key, label }))}
+            onChange={(e) => setDateRange(e.target.value)}
+            className={styles.filter}
+          />
 
-          <label>
-            Department
-            <select value={department} onChange={(e) => setDepartment(e.target.value)}>
-              {departments.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Department"
+            value={department}
+            options={departments.map((value) => ({ value, label: value }))}
+            onChange={(e) => setDepartment(e.target.value)}
+            className={styles.filter}
+          />
 
-          <label>
-            Staff
-            <select value={staff} onChange={(e) => setStaff(e.target.value)}>
-              {staffMembers.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Staff"
+            value={staff}
+            options={staffMembers.map((value) => ({ value, label: value }))}
+            onChange={(e) => setStaff(e.target.value)}
+            className={styles.filter}
+          />
 
           <div className={styles.exportGroup}>
             {exportOptions.map((opt) => (
-              <button
+              <Button
                 key={opt.key}
-                type="button"
                 className={styles.exportButton}
+                disabled={exporting === opt.key}
                 onClick={() => handleExport(opt.key)}
               >
-                {opt.label}
-              </button>
+                {exporting === opt.key ? 'Exporting...' : opt.label}
+              </Button>
             ))}
           </div>
         </div>
       </header>
 
       <section className={styles.grid}>
-        <div className={styles.card}>
-          <h2>Ticket summary</h2>
-          <p className={styles.cardSubtext}>Overview of ticket count and status.</p>
-          <div className={styles.summaryGrid}>
-            <div>
-              <div className={styles.summaryValue}>{filteredTickets.length}</div>
-              <div className={styles.summaryLabel}>Total tickets</div>
-            </div>
-            <div>
-              <div className={styles.summaryValue}>
-                {filteredTickets.filter((t) => t.status === 'Closed').length}
-              </div>
-              <div className={styles.summaryLabel}>Closed tickets</div>
-            </div>
-            <div>
-              <div className={styles.summaryValue}>
-                {filteredTickets.filter((t) => t.status !== 'Closed').length}
-              </div>
-              <div className={styles.summaryLabel}>Open tickets</div>
-            </div>
-          </div>
+        <div className={styles.summaryGrid}>
+          <StatsCard title="Total tickets" value={filteredTickets.length} variant="primary" />
+          <StatsCard title="Closed tickets" value={filteredTickets.filter((ticket) => ticket.status === 'Closed').length} variant="success" />
+          <StatsCard title="Open tickets" value={filteredTickets.filter((ticket) => ticket.status !== 'Closed').length} variant="warning" />
         </div>
 
-        <div className={styles.card}>
-          <h2>Category-wise report</h2>
-          <p className={styles.cardSubtext}>Tickets grouped by category.</p>
-          <div className={styles.chartContainer}>
-            <Bar data={categoryData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }} />
-          </div>
-        </div>
+        <BarChart
+          title="Category-wise report"
+          subtitle="Tickets grouped by category."
+          data={categoryData}
+          xKey="category"
+          bars={[{ dataKey: 'count', name: 'Tickets by category' }]}
+          height={250}
+          className={styles.chartCard}
+        />
 
-        <div className={styles.card}>
-          <h2>Priority-based report</h2>
-          <p className={styles.cardSubtext}>Distribution of tickets by priority.</p>
-          <div className={styles.chartContainer}>
-            <Pie data={priorityData} options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }} />
-          </div>
-        </div>
+        <PieChart
+          title="Priority-based report"
+          subtitle="Distribution of tickets by priority."
+          data={priorityData}
+          nameKey="priority"
+          dataKey="count"
+          height={250}
+          className={styles.chartCard}
+        />
 
-        <div className={styles.card}>
-          <h2>Resolution time report</h2>
-          <p className={styles.cardSubtext}>How long it takes to resolve tickets.</p>
-          <div className={styles.chartContainer}>
-            <Line data={resolutionTimes} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-          </div>
-        </div>
+        <LineChart
+          title="Resolution time report"
+          subtitle="How long it takes to resolve tickets."
+          data={resolutionTimes}
+          xKey="ticket"
+          lines={[{ dataKey: 'minutes', name: 'Resolution time (minutes)', fill: true, tension: 0.2 }]}
+          height={250}
+          showLegend={false}
+          className={styles.chartCard}
+        />
 
-        <div className={styles.card}>
-          <h2>Staff performance</h2>
-          <p className={styles.cardSubtext}>Tickets resolved per staff member.</p>
-          <div className={styles.chartContainer}>
-            <Bar
-              data={{
-                labels: Object.keys(aggregateCountByKey(filteredTickets.filter((t) => t.status === 'Closed'), 'staff')),
-                datasets: [
-                  {
-                    label: 'Resolved tickets',
-                    data: Object.values(
-                      aggregateCountByKey(filteredTickets.filter((t) => t.status === 'Closed'), 'staff')
-                    ),
-                    backgroundColor: '#38bdf8',
-                  },
-                ],
-              }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
-            />
-          </div>
-        </div>
+        <BarChart
+          title="Staff performance"
+          subtitle="Tickets resolved per staff member."
+          data={staffPerformance}
+          xKey="staff"
+          bars={[{ dataKey: 'resolved', name: 'Resolved tickets' }]}
+          height={250}
+          showLegend={false}
+          className={styles.chartCard}
+        />
 
-        <div className={styles.card}>
-          <h2>Department breakdown</h2>
-          <p className={styles.cardSubtext}>Tickets per department.</p>
-          <div className={styles.chartContainer}>
-            <Bar
-              data={{
-                labels: Object.keys(aggregateCountByKey(filteredTickets, 'department')),
-                datasets: [
-                  {
-                    label: 'Tickets',
-                    data: Object.values(aggregateCountByKey(filteredTickets, 'department')),
-                    backgroundColor: '#a78bfa',
-                  },
-                ],
-              }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
-            />
-          </div>
-        </div>
+        <BarChart
+          title="Department breakdown"
+          subtitle="Tickets per department."
+          data={departmentBreakdown}
+          xKey="department"
+          bars={[{ dataKey: 'tickets', name: 'Tickets' }]}
+          height={250}
+          showLegend={false}
+          className={styles.chartCard}
+        />
       </section>
+
+      {feedback ? (
+        <Alert type={feedback.type} title={feedback.title} closable onClose={() => setFeedback(null)} className={styles.feedback}>
+          {feedback.message}
+        </Alert>
+      ) : null}
     </div>
   )
 }

@@ -1,4 +1,10 @@
 import React, { useMemo, useState } from 'react'
+import Alert from '../../components/common/UI/Alert'
+import Button from '../../components/common/UI/Button'
+import Card from '../../components/common/UI/Card'
+import Input from '../../components/common/UI/Input'
+import Modal from '../../components/common/UI/Modal'
+import Select from '../../components/common/UI/Select'
 import styles from './SettingsPage.module.css'
 
 const TAB_KEYS = {
@@ -11,17 +17,23 @@ const TAB_KEYS = {
   admin: 'Admin',
 }
 
+const DEFAULT_PROFILE = { fullName: 'Jane Doe', email: 'jane.doe@example.com', phone: '555-1234' }
+const DEFAULT_SECURITY = { currentPassword: '', newPassword: '', confirmPassword: '' }
+const DEFAULT_NOTIFICATIONS = { email: true, sms: false, push: true }
+const DEFAULT_APPEARANCE = { theme: 'light', fontSize: 'medium', compactMode: false }
+const DEFAULT_TICKET_CONFIG = { defaultPriority: 'Medium', autoAssign: false, updateNotifications: true }
+const DEFAULT_SYSTEM_SETTINGS = { maintenanceMode: false, allowSelfRegistration: true, defaultTicketType: 'General' }
+const themeOptions = ['light', 'dark', 'system'].map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) }))
+const fontSizeOptions = ['small', 'medium', 'large'].map((value) => ({ value, label: value[0].toUpperCase() + value.slice(1) }))
+const priorityOptions = ['Low', 'Medium', 'High'].map((value) => ({ value, label: value }))
+
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile')
 
   // Demo-only flags / state. In a real app this would come from auth context.
   const [isAdmin, setIsAdmin] = useState(false)
 
-  const [profile, setProfile] = useState({
-    fullName: 'Jane Doe',
-    email: 'jane.doe@example.com',
-    phone: '555-1234',
-  })
+  const [profile, setProfile] = useState(DEFAULT_PROFILE)
 
   const [security, setSecurity] = useState({
     currentPassword: '',
@@ -53,6 +65,18 @@ export default function SettingsPage() {
     defaultTicketType: 'General',
   })
 
+  const [savedSettings, setSavedSettings] = useState({
+    profile: DEFAULT_PROFILE,
+    security: DEFAULT_SECURITY,
+    notifications: DEFAULT_NOTIFICATIONS,
+    appearance: DEFAULT_APPEARANCE,
+    ticket: DEFAULT_TICKET_CONFIG,
+    admin: DEFAULT_SYSTEM_SETTINGS,
+  })
+  const [savingSection, setSavingSection] = useState(null)
+  const [feedback, setFeedback] = useState(null)
+  const [accountAction, setAccountAction] = useState(null)
+
   const tabs = useMemo(() => {
     const baseTabs = [
       { key: 'profile', label: TAB_KEYS.profile },
@@ -68,35 +92,53 @@ export default function SettingsPage() {
     return baseTabs
   }, [isAdmin])
 
-  const handleSave = (section) => {
-    alert(`Saved ${section} settings.`)
+  const handleSave = async (section) => {
+    if (savingSection) return
+
+    let validationError = null
+    if (section === 'profile') {
+      if (!profile.fullName.trim()) validationError = 'Full name is required.'
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email)) validationError = 'Enter a valid email address.'
+    }
+    if (section === 'security') {
+      if (!security.currentPassword || !security.newPassword || !security.confirmPassword) validationError = 'Complete all password fields before updating your password.'
+      else if (security.newPassword.length < 8) validationError = 'New password must be at least 8 characters.'
+      else if (security.newPassword !== security.confirmPassword) validationError = 'New password and confirmation must match.'
+    }
+    if (section === 'admin' && !systemSettings.defaultTicketType.trim()) validationError = 'Default ticket type is required.'
+    if (validationError) {
+      setFeedback({ type: 'error', title: 'Unable to save settings', message: validationError })
+      return
+    }
+
+    setSavingSection(section)
+    setFeedback(null)
+    await Promise.resolve()
+    const values = { profile, notifications, appearance, ticket: ticketConfig, admin: systemSettings }
+    if (section === 'security') {
+      setSavedSettings((current) => ({ ...current, security: DEFAULT_SECURITY }))
+      setSecurity(DEFAULT_SECURITY)
+    } else {
+      setSavedSettings((current) => ({ ...current, [section]: values[section] }))
+    }
+    setSavingSection(null)
+    setFeedback({ type: 'success', title: 'Settings saved', message: `${TAB_KEYS[section]} settings were updated locally.` })
   }
 
   const handleReset = (section) => {
-    if (!window.confirm('Reset settings in this section to defaults?')) return
+    const savedValue = savedSettings[section]
+    if (section === 'profile') setProfile(savedValue)
+    if (section === 'security') setSecurity(savedValue)
+    if (section === 'notifications') setNotifications(savedValue)
+    if (section === 'appearance') setAppearance(savedValue)
+    if (section === 'ticket') setTicketConfig(savedValue)
+    if (section === 'admin') setSystemSettings(savedValue)
+    setFeedback({ type: 'success', title: 'Settings reset', message: `${TAB_KEYS[section]} restored to its last saved values.` })
+  }
 
-    switch (section) {
-      case 'profile':
-        setProfile({ fullName: '', email: '', phone: '' })
-        break
-      case 'security':
-        setSecurity({ currentPassword: '', newPassword: '', confirmPassword: '' })
-        break
-      case 'notifications':
-        setNotifications({ email: true, sms: false, push: true })
-        break
-      case 'appearance':
-        setAppearance({ theme: 'light', fontSize: 'medium', compactMode: false })
-        break
-      case 'ticket':
-        setTicketConfig({ defaultPriority: 'Medium', autoAssign: false, updateNotifications: true })
-        break
-      case 'admin':
-        setSystemSettings({ maintenanceMode: false, allowSelfRegistration: true, defaultTicketType: 'General' })
-        break
-      default:
-        break
-    }
+  const confirmAccountAction = () => {
+    setAccountAction(null)
+    setFeedback({ type: 'success', title: 'Account action completed', message: 'The account action was simulated locally.' })
   }
 
   return (
@@ -109,60 +151,67 @@ export default function SettingsPage() {
             "Admin" toggle is enabled.
           </p>
         </div>
-        <div className={styles.adminToggle}>
-          <label>
-            <input
-              type="checkbox"
-              checked={isAdmin}
-              onChange={(e) => setIsAdmin(e.target.checked)}
-            />
-            Admin mode
-          </label>
-        </div>
+        <Input
+          type="checkbox"
+          label="Admin mode"
+          fullWidth={false}
+          checked={isAdmin}
+          onChange={(e) => {
+            setIsAdmin(e.target.checked)
+            if (!e.target.checked && activeTab === 'admin') setActiveTab('profile')
+          }}
+        />
       </header>
 
+      {feedback ? (
+        <Alert type={feedback.type} title={feedback.title} closable onClose={() => setFeedback(null)} className={styles.feedback}>
+          {feedback.message}
+        </Alert>
+      ) : null}
+
       <div className={styles.content}>
-        <nav className={styles.sidebar}>
+        <nav className={styles.sidebar} aria-label="Settings sections">
           {tabs.map((tab) => (
-            <button
+            <Button
               key={tab.key}
+              variant="ghost"
               className={`${styles.tabButton} ${activeTab === tab.key ? styles.active : ''}`}
               onClick={() => setActiveTab(tab.key)}
-              type="button"
+              aria-current={activeTab === tab.key ? 'page' : undefined}
             >
               {tab.label}
-            </button>
+            </Button>
           ))}
         </nav>
 
         <main className={styles.main}>
           {activeTab === 'profile' && (
-            <section className={styles.section}>
-              <h2>Profile Settings</h2>
-              <p>Update your name, email, and contact information.</p>
+            <Card className={styles.section} title="Profile Settings" subtitle="Update your name, email, and contact information.">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
                   handleSave('profile')
                 }}
               >
-                <label htmlFor="fullName">Full name</label>
-                <input
+                <Input
+                  label="Full name"
                   id="fullName"
                   value={profile.fullName}
+                  required
                   onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                 />
 
-                <label htmlFor="email">Email</label>
-                <input
+                <Input
+                  label="Email"
                   id="email"
                   type="email"
                   value={profile.email}
+                  required
                   onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                 />
 
-                <label htmlFor="phone">Phone</label>
-                <input
+                <Input
+                  label="Phone"
                   id="phone"
                   type="tel"
                   value={profile.phone}
@@ -170,294 +219,202 @@ export default function SettingsPage() {
                 />
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => handleReset('profile')}>
-                    Reset
-                  </button>
-                  <button type="submit">Save changes</button>
+                  <Button type="button" variant="secondary" onClick={() => handleReset('profile')}>Reset</Button>
+                  <Button type="submit" loading={savingSection === 'profile'}>Save changes</Button>
                 </div>
               </form>
-            </section>
+            </Card>
           )}
 
           {activeTab === 'security' && (
-            <section className={styles.section}>
-              <h2>Security Settings</h2>
-              <p>Update your password and review security-related preferences.</p>
+            <Card className={styles.section} title="Security Settings" subtitle="Update your password and review security-related preferences.">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  if (security.newPassword !== security.confirmPassword) {
-                    alert('New password and confirmation must match.')
-                    return
-                  }
                   handleSave('security')
-                  setSecurity({ currentPassword: '', newPassword: '', confirmPassword: '' })
                 }}
               >
-                <label htmlFor="currentPassword">Current password</label>
-                <input
+                <Input
+                  label="Current password"
                   id="currentPassword"
                   type="password"
                   value={security.currentPassword}
+                  required
+                  autoComplete="current-password"
                   onChange={(e) => setSecurity({ ...security, currentPassword: e.target.value })}
                 />
 
-                <label htmlFor="newPassword">New password</label>
-                <input
+                <Input
+                  label="New password"
                   id="newPassword"
                   type="password"
                   value={security.newPassword}
+                  required
+                  autoComplete="new-password"
                   onChange={(e) => setSecurity({ ...security, newPassword: e.target.value })}
                 />
 
-                <label htmlFor="confirmPassword">Confirm new password</label>
-                <input
+                <Input
+                  label="Confirm new password"
                   id="confirmPassword"
                   type="password"
                   value={security.confirmPassword}
+                  required
+                  autoComplete="new-password"
                   onChange={(e) => setSecurity({ ...security, confirmPassword: e.target.value })}
                 />
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => handleReset('security')}>
-                    Reset
-                  </button>
-                  <button type="submit">Update password</button>
+                  <Button type="button" variant="secondary" onClick={() => handleReset('security')}>Reset</Button>
+                  <Button type="submit" loading={savingSection === 'security'}>Update password</Button>
                 </div>
               </form>
-            </section>
+            </Card>
           )}
 
           {activeTab === 'notifications' && (
-            <section className={styles.section}>
-              <h2>Notification Preferences</h2>
-              <p>Control which notifications you receive and how you receive them.</p>
+            <Card className={styles.section} title="Notification Preferences" subtitle="Control which notifications you receive and how you receive them.">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
                   handleSave('notifications')
                 }}
               >
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={notifications.email}
-                    onChange={(e) => setNotifications({ ...notifications, email: e.target.checked })}
-                  />
-                  Email notifications
-                </label>
-
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={notifications.sms}
-                    onChange={(e) => setNotifications({ ...notifications, sms: e.target.checked })}
-                  />
-                  SMS notifications
-                </label>
-
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={notifications.push}
-                    onChange={(e) => setNotifications({ ...notifications, push: e.target.checked })}
-                  />
-                  Push notifications
-                </label>
+                <Input type="checkbox" label="Email notifications" fullWidth={false} checked={notifications.email} onChange={(e) => setNotifications({ ...notifications, email: e.target.checked })} />
+                <Input type="checkbox" label="SMS notifications" fullWidth={false} checked={notifications.sms} onChange={(e) => setNotifications({ ...notifications, sms: e.target.checked })} />
+                <Input type="checkbox" label="Push notifications" fullWidth={false} checked={notifications.push} onChange={(e) => setNotifications({ ...notifications, push: e.target.checked })} />
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => handleReset('notifications')}>
-                    Reset
-                  </button>
-                  <button type="submit">Save preferences</button>
+                  <Button type="button" variant="secondary" onClick={() => handleReset('notifications')}>Reset</Button>
+                  <Button type="submit" loading={savingSection === 'notifications'}>Save preferences</Button>
                 </div>
               </form>
-            </section>
+            </Card>
           )}
 
           {activeTab === 'appearance' && (
-            <section className={styles.section}>
-              <h2>Appearance & User Preferences</h2>
-              <p>Customize your workspace appearance and layout preferences.</p>
+            <Card className={styles.section} title="Appearance & User Preferences" subtitle="Customize your workspace appearance and layout preferences.">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
                   handleSave('appearance')
                 }}
               >
-                <label htmlFor="theme">Color theme</label>
-                <select
+                <Select
+                  label="Color theme"
                   id="theme"
                   value={appearance.theme}
+                  options={themeOptions}
                   onChange={(e) => setAppearance({ ...appearance, theme: e.target.value })}
                 >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="system">System</option>
-                </select>
+                </Select>
 
-                <label htmlFor="fontSize">Font size</label>
-                <select
+                <Select
+                  label="Font size"
                   id="fontSize"
                   value={appearance.fontSize}
+                  options={fontSizeOptions}
                   onChange={(e) => setAppearance({ ...appearance, fontSize: e.target.value })}
-                >
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                </select>
+                />
 
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={appearance.compactMode}
-                    onChange={(e) => setAppearance({ ...appearance, compactMode: e.target.checked })}
-                  />
-                  Compact (denser) layout
-                </label>
+                <Input type="checkbox" label="Compact (denser) layout" fullWidth={false} checked={appearance.compactMode} onChange={(e) => setAppearance({ ...appearance, compactMode: e.target.checked })} />
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => handleReset('appearance')}>
-                    Reset
-                  </button>
-                  <button type="submit">Save preferences</button>
+                  <Button type="button" variant="secondary" onClick={() => handleReset('appearance')}>Reset</Button>
+                  <Button type="submit" loading={savingSection === 'appearance'}>Save preferences</Button>
                 </div>
               </form>
-            </section>
+            </Card>
           )}
 
           {activeTab === 'ticket' && (
-            <section className={styles.section}>
-              <h2>Ticket Configuration</h2>
-              <p>Configure defaults for ticket creation and notifications.</p>
+            <Card className={styles.section} title="Ticket Configuration" subtitle="Configure defaults for ticket creation and notifications.">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
                   handleSave('ticket')
                 }}
               >
-                <label htmlFor="defaultPriority">Default ticket priority</label>
-                <select
+                <Select
+                  label="Default ticket priority"
                   id="defaultPriority"
                   value={ticketConfig.defaultPriority}
+                  options={priorityOptions}
                   onChange={(e) => setTicketConfig({ ...ticketConfig, defaultPriority: e.target.value })}
-                >
-                  <option>Low</option>
-                  <option>Medium</option>
-                  <option>High</option>
-                </select>
+                />
 
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={ticketConfig.autoAssign}
-                    onChange={(e) => setTicketConfig({ ...ticketConfig, autoAssign: e.target.checked })}
-                  />
-                  Automatically assign new tickets to me
-                </label>
-
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={ticketConfig.updateNotifications}
-                    onChange={(e) => setTicketConfig({ ...ticketConfig, updateNotifications: e.target.checked })}
-                  />
-                  Receive updates when ticket status changes
-                </label>
+                <Input type="checkbox" label="Automatically assign new tickets to me" fullWidth={false} checked={ticketConfig.autoAssign} onChange={(e) => setTicketConfig({ ...ticketConfig, autoAssign: e.target.checked })} />
+                <Input type="checkbox" label="Receive updates when ticket status changes" fullWidth={false} checked={ticketConfig.updateNotifications} onChange={(e) => setTicketConfig({ ...ticketConfig, updateNotifications: e.target.checked })} />
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => handleReset('ticket')}>
-                    Reset
-                  </button>
-                  <button type="submit">Save configuration</button>
+                  <Button type="button" variant="secondary" onClick={() => handleReset('ticket')}>Reset</Button>
+                  <Button type="submit" loading={savingSection === 'ticket'}>Save configuration</Button>
                 </div>
               </form>
-            </section>
+            </Card>
           )}
 
           {activeTab === 'account' && (
-            <section className={styles.section}>
-              <h2>Account Management</h2>
-              <p>Manage your account lifecycle and security.</p>
+            <Card className={styles.section} title="Account Management" subtitle="Manage your account lifecycle and security.">
 
-              <div className={styles.card}>
+              <Card className={styles.card} padding="small" shadow="none">
                 <h3>Deactivate account</h3>
                 <p>Deactivating your account will prevent you from logging in until you reactivate it.</p>
-                <button
-                  className={styles.danger}
-                  onClick={() => {
-                    if (window.confirm('Deactivate your account?')) {
-                      alert('Your account has been deactivated. (Demo only)')
-                    }
-                  }}
-                >
-                  Deactivate account
-                </button>
-              </div>
+                <Button variant="danger" onClick={() => setAccountAction('deactivate')}>Deactivate account</Button>
+              </Card>
 
-              <div className={styles.card}>
+              <Card className={styles.card} padding="small" shadow="none">
                 <h3>Delete account</h3>
                 <p>Deleting your account is permanent and cannot be undone.</p>
-                <button
-                  className={styles.danger}
-                  onClick={() => {
-                    if (window.confirm('Delete your account? This cannot be undone.')) {
-                      alert('Your account has been deleted. (Demo only)')
-                    }
-                  }}
-                >
-                  Delete account
-                </button>
-              </div>
-            </section>
+                <Button variant="danger" onClick={() => setAccountAction('delete')}>Delete account</Button>
+              </Card>
+            </Card>
           )}
 
           {activeTab === 'admin' && isAdmin && (
-            <section className={styles.section}>
-              <h2>Admin System Settings</h2>
-              <p>Settings that affect the entire helpdesk system.</p>
+            <Card className={styles.section} title="Admin System Settings" subtitle="Settings that affect the entire helpdesk system.">
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
                   handleSave('admin')
                 }}
               >
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={systemSettings.maintenanceMode}
-                    onChange={(e) => setSystemSettings({ ...systemSettings, maintenanceMode: e.target.checked })}
-                  />
-                  Enable maintenance mode (read-only for non-admins)
-                </label>
+                <Input type="checkbox" label="Enable maintenance mode (read-only for non-admins)" fullWidth={false} checked={systemSettings.maintenanceMode} onChange={(e) => setSystemSettings({ ...systemSettings, maintenanceMode: e.target.checked })} />
+                <Input type="checkbox" label="Allow users to self-register" fullWidth={false} checked={systemSettings.allowSelfRegistration} onChange={(e) => setSystemSettings({ ...systemSettings, allowSelfRegistration: e.target.checked })} />
 
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type="checkbox"
-                    checked={systemSettings.allowSelfRegistration}
-                    onChange={(e) => setSystemSettings({ ...systemSettings, allowSelfRegistration: e.target.checked })}
-                  />
-                  Allow users to self-register
-                </label>
-
-                <label htmlFor="defaultTicketType">Default ticket type</label>
-                <input
+                <Input
+                  label="Default ticket type"
                   id="defaultTicketType"
                   value={systemSettings.defaultTicketType}
+                  required
                   onChange={(e) => setSystemSettings({ ...systemSettings, defaultTicketType: e.target.value })}
                 />
 
                 <div className={styles.actions}>
-                  <button type="button" className={styles.secondary} onClick={() => handleReset('admin')}>
-                    Reset
-                  </button>
-                  <button type="submit">Save system settings</button>
+                  <Button type="button" variant="secondary" onClick={() => handleReset('admin')}>Reset</Button>
+                  <Button type="submit" loading={savingSection === 'admin'}>Save system settings</Button>
                 </div>
               </form>
-            </section>
+            </Card>
           )}
         </main>
       </div>
+
+      <Modal
+        isOpen={Boolean(accountAction)}
+        onClose={() => setAccountAction(null)}
+        title={accountAction === 'delete' ? 'Delete account' : 'Deactivate account'}
+        footer={(
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={() => setAccountAction(null)}>Cancel</Button>
+            <Button variant="danger" onClick={confirmAccountAction}>
+              {accountAction === 'delete' ? 'Delete account' : 'Deactivate account'}
+            </Button>
+          </div>
+        )}
+      >
+        <p>{accountAction === 'delete' ? 'Delete your account? This cannot be undone.' : 'Deactivate your account? You will not be able to log in until it is reactivated.'}</p>
+      </Modal>
     </div>
   )
 }

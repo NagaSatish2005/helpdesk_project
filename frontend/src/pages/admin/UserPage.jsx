@@ -1,4 +1,12 @@
 import React, { useMemo, useState } from 'react'
+import Alert from '../../components/common/UI/Alert'
+import Button from '../../components/common/UI/Button'
+import Card from '../../components/common/UI/Card'
+import Input from '../../components/common/UI/Input'
+import Modal from '../../components/common/UI/Modal'
+import Pagination from '../../components/common/UI/Pagination'
+import Select from '../../components/common/UI/Select'
+import Table from '../../components/common/UI/Table'
 import styles from './UserPage.module.css'
 
 const sampleUsers = [
@@ -52,14 +60,16 @@ const sampleUsers = [
   },
 ]
 
-const roles = ['All', 'Student', 'Staff', 'Admin']
-const statuses = ['All', 'Active', 'Inactive']
+const roles = ['All', 'Student', 'Staff', 'Admin'].map((role) => ({ value: role, label: role }))
+const statuses = ['All', 'Active', 'Inactive'].map((status) => ({ value: status, label: status }))
 
 export default function UserPage() {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [page, setPage] = useState(1)
+  const [modal, setModal] = useState(null)
+  const [feedback, setFeedback] = useState(null)
 
   const pageSize = 5
 
@@ -80,33 +90,68 @@ export default function UserPage() {
   }, [search, roleFilter, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
+  const safePage = Math.min(page, totalPages)
 
   const pagedUsers = useMemo(() => {
-    const start = (page - 1) * pageSize
+    const start = (safePage - 1) * pageSize
     return filteredUsers.slice(start, start + pageSize)
-  }, [filteredUsers, page])
+  }, [filteredUsers, safePage])
+
+  const showFeedback = (title, message, type = 'info') => {
+    setFeedback({ title, message, type })
+  }
 
   const handleAddNew = () => {
-    alert('Add new user (demo).')
+    setModal({ type: 'info', title: 'Add new user', message: 'User creation is still a local demo.' })
   }
 
   const handleEdit = (id) => {
-    alert(`Edit user ${id} (demo).`)
+    setModal({ type: 'info', title: 'Edit user', message: `Editing ${id} is still a local demo.` })
   }
 
   const handleToggleStatus = (id, currentStatus) => {
-    alert(`Set user ${id} to ${currentStatus === 'Active' ? 'Inactive' : 'Active'} (demo).`)
+    const nextStatus = currentStatus === 'Active' ? 'Inactive' : 'Active'
+    setModal({ type: 'info', title: `${nextStatus} user`, message: `Changing ${id} to ${nextStatus} is still a local demo.` })
   }
 
   const handleDelete = (id) => {
-    if (window.confirm(`Delete user ${id}? This cannot be undone.`)) {
-      alert(`User ${id} deleted (demo).`)
-    }
+    setModal({ type: 'delete', title: 'Delete user', userId: id })
   }
 
-  const handleViewDetails = (id) => {
-    alert(`View details for ${id} (demo).`)
+  const handleViewDetails = (user) => {
+    setModal({ type: 'details', title: 'User details', user })
   }
+
+  const columns = [
+    { key: 'id', header: 'ID', render: (user) => <span className={styles.userId}>{user.id}</span> },
+    { key: 'name', header: 'Name' },
+    { key: 'email', header: 'Email' },
+    { key: 'role', header: 'Role' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (user) => (
+        <span className={`${styles.statusBadge} ${user.status === 'Active' ? styles.active : styles.inactive}`}>
+          {user.status}
+        </span>
+      ),
+    },
+    { key: 'created', header: 'Created' },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (user) => (
+        <div className={styles.actions}>
+          <Button size="small" variant="secondary" onClick={() => handleViewDetails(user)}>View</Button>
+          <Button size="small" variant="secondary" onClick={() => handleEdit(user.id)}>Edit</Button>
+          <Button size="small" variant="secondary" onClick={() => handleToggleStatus(user.id, user.status)}>
+            {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+          </Button>
+          <Button size="small" variant="danger" onClick={() => handleDelete(user.id)}>Delete</Button>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <div className={styles.container}>
@@ -115,118 +160,94 @@ export default function UserPage() {
           <h1>Users</h1>
           <p>View and manage user accounts, roles, and access.</p>
         </div>
-        <button className={styles.primary} onClick={handleAddNew}>
-          Add new user
-        </button>
+        <Button onClick={handleAddNew}>Add new user</Button>
       </header>
 
       <section className={styles.filters}>
-        <input
+        <Input
           className={styles.search}
           placeholder="Search by name, email or ID..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
         />
 
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-          {roles.map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
-        </select>
-
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
+        <Select
+          className={styles.filter}
+          fullWidth={false}
+          value={roleFilter}
+          options={roles}
+          onChange={(e) => {
+            setRoleFilter(e.target.value)
+            setPage(1)
+          }}
+        />
+        <Select
+          className={styles.filter}
+          fullWidth={false}
+          value={statusFilter}
+          options={statuses}
+          onChange={(e) => {
+            setStatusFilter(e.target.value)
+            setPage(1)
+          }}
+        />
 
         <div className={styles.stats}>
           Showing {filteredUsers.length} user{filteredUsers.length === 1 ? '' : 's'}
         </div>
       </section>
 
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pagedUsers.length === 0 ? (
-            <tr>
-              <td colSpan={7} className={styles.emptyRow}>
-                No users found.
-              </td>
-            </tr>
-          ) : (
-            pagedUsers.map((user) => (
-              <tr key={user.id}>
-                <td className={styles.userId}>{user.id}</td>
-                <td>{user.name}</td>
-                <td>{user.email}</td>
-                <td>{user.role}</td>
-                <td>
-                  <span
-                    className={`${styles.statusBadge} ${
-                      user.status === 'Active' ? styles.active : styles.inactive
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </td>
-                <td>{user.created}</td>
-                <td className={styles.actions}>
-                  <button className={styles.secondary} onClick={() => handleViewDetails(user.id)}>
-                    View
-                  </button>
-                  <button className={styles.secondary} onClick={() => handleEdit(user.id)}>
-                    Edit
-                  </button>
-                  <button
-                    className={styles.secondary}
-                    onClick={() => handleToggleStatus(user.id, user.status)}
-                  >
-                    {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button className={styles.danger} onClick={() => handleDelete(user.id)}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+      <Card padding="none" className={styles.tableCard}>
+        <Table className={styles.table} columns={columns} data={pagedUsers} emptyMessage="No users found." />
+      </Card>
 
-      <div className={styles.pagination}>
-        <button
-          className={styles.secondary}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-        >
-          Previous
-        </button>
-        <span>
-          Page {page} of {totalPages}
-        </span>
-        <button
-          className={styles.secondary}
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={safePage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={filteredUsers.length}
+        onPageChange={setPage}
+        className={styles.pagination}
+      />
+
+      {feedback ? (
+        <Alert type={feedback.type} title={feedback.title} closable onClose={() => setFeedback(null)} className={styles.feedback}>
+          {feedback.message}
+        </Alert>
+      ) : null}
+
+      <Modal
+        isOpen={Boolean(modal)}
+        onClose={() => setModal(null)}
+        title={modal?.title}
+        footer={modal?.type === 'delete' ? (
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={() => setModal(null)}>Cancel</Button>
+            <Button variant="danger" onClick={() => {
+              showFeedback('User deleted', `User ${modal.userId} deleted (demo).`, 'success')
+              setModal(null)
+            }}>Delete</Button>
+          </div>
+        ) : null}
+      >
+        {modal?.type === 'details' ? (
+          <dl className={styles.details}>
+            <dt>ID</dt><dd>{modal.user.id}</dd>
+            <dt>Name</dt><dd>{modal.user.name}</dd>
+            <dt>Email</dt><dd>{modal.user.email}</dd>
+            <dt>Role</dt><dd>{modal.user.role}</dd>
+            <dt>Status</dt><dd>{modal.user.status}</dd>
+            <dt>Created</dt><dd>{modal.user.created}</dd>
+          </dl>
+        ) : modal?.type === 'delete' ? (
+          <p>Delete user {modal.userId}? This cannot be undone.</p>
+        ) : modal ? (
+          <p>{modal.message}</p>
+        ) : null}
+      </Modal>
     </div>
   )
 }

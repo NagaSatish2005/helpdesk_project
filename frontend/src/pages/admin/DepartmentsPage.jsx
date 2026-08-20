@@ -1,4 +1,12 @@
 import React, { useMemo, useState } from 'react'
+import Alert from '../../components/common/UI/Alert'
+import Badge from '../../components/common/UI/Badge'
+import Button from '../../components/common/UI/Button'
+import Card from '../../components/common/UI/Card'
+import Input from '../../components/common/UI/Input'
+import Modal from '../../components/common/UI/Modal'
+import Pagination from '../../components/common/UI/Pagination'
+import Select from '../../components/common/UI/Select'
 import styles from './DepartmentsPage.module.css'
 
 const sampleDepartments = [
@@ -54,12 +62,15 @@ const sampleDepartments = [
   },
 ]
 
-const statuses = ['All', 'Active', 'Inactive']
+const statuses = ['All', 'Active', 'Inactive'].map((status) => ({ value: status, label: status }))
 
 export default function DepartmentsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [page, setPage] = useState(1)
+  const [activeDepartment, setActiveDepartment] = useState(null)
+  const [modal, setModal] = useState(null)
+  const [feedback, setFeedback] = useState(null)
   const pageSize = 4
 
   const filteredDepartments = useMemo(() => {
@@ -78,12 +89,11 @@ export default function DepartmentsPage() {
   }, [search, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredDepartments.length / pageSize))
+  const safePage = Math.min(page, totalPages)
   const paged = useMemo(() => {
-    const start = (page - 1) * pageSize
+    const start = (safePage - 1) * pageSize
     return filteredDepartments.slice(start, start + pageSize)
-  }, [filteredDepartments, page])
-
-  const [activeDepartment, setActiveDepartment] = useState(null)
+  }, [filteredDepartments, safePage])
 
   const handleOpenDetails = (dept) => {
     setActiveDepartment(dept)
@@ -94,21 +104,25 @@ export default function DepartmentsPage() {
   }
 
   const handleAdd = () => {
-    alert('Add new department (demo).')
+    setModal({ title: 'Add department', message: 'Department creation is still a local demo.' })
   }
 
   const handleEdit = (deptId) => {
-    alert(`Edit department ${deptId} (demo).`)
+    handleCloseDetails()
+    setModal({ title: 'Edit department', message: `Editing ${deptId} is still a local demo.` })
   }
 
   const handleDelete = (deptId) => {
-    if (window.confirm(`Delete department ${deptId}?`)) {
-      alert(`Department ${deptId} deleted (demo).`)
-    }
+    setModal({ type: 'delete', title: 'Delete department', departmentId: deptId })
   }
 
   const handleAssignStaff = (deptId) => {
-    alert(`Assign/reassign staff for ${deptId} (demo).`)
+    handleCloseDetails()
+    setModal({ title: 'Manage staff', message: `Assigning or reassigning staff for ${deptId} is still a local demo.` })
+  }
+
+  const showFeedback = (title, message, type = 'success') => {
+    setFeedback({ title, message, type })
   }
 
   return (
@@ -118,26 +132,32 @@ export default function DepartmentsPage() {
           <h1>Departments</h1>
           <p>View and manage departments, staff assignments, and performance metrics.</p>
         </div>
-        <button className={styles.primary} onClick={handleAdd}>
-          Add department
-        </button>
+        <Button onClick={handleAdd}>Add department</Button>
       </header>
 
       <section className={styles.filters}>
-        <input
+        <Input
           className={styles.search}
           placeholder="Search by name, ID, or head..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search departments by name, ID, or head"
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
         />
 
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
+        <Select
+          className={styles.filter}
+          fullWidth={false}
+          label="Status"
+          value={statusFilter}
+          options={statuses}
+          onChange={(e) => {
+            setStatusFilter(e.target.value)
+            setPage(1)
+          }}
+        />
 
         <div className={styles.stats}>
           Showing {filteredDepartments.length} department{filteredDepartments.length === 1 ? '' : 's'}
@@ -145,8 +165,10 @@ export default function DepartmentsPage() {
       </section>
 
       <div className={styles.list}>
-        {paged.map((dept) => (
-          <div key={dept.id} className={styles.card}>
+        {paged.length === 0 ? (
+          <Card className={styles.emptyState}>No departments found.</Card>
+        ) : paged.map((dept) => (
+          <Card key={dept.id} className={styles.card} padding="none">
             <div className={styles.row}>
               <div>
                 <h2 className={styles.title}>{dept.name}</h2>
@@ -158,9 +180,7 @@ export default function DepartmentsPage() {
                   <span>{dept.staffCount} staff</span>
                 </div>
               </div>
-              <span className={`${styles.statusBadge} ${dept.status === 'Active' ? styles.active : styles.inactive}`}>
-                {dept.status}
-              </span>
+              <Badge variant={dept.status === 'Active' ? 'success' : 'danger'}>{dept.status}</Badge>
             </div>
 
             <p className={styles.description}>{dept.description}</p>
@@ -185,52 +205,32 @@ export default function DepartmentsPage() {
             </div>
 
             <div className={styles.actions}>
-              <button className={styles.secondary} onClick={() => handleOpenDetails(dept)}>
-                Details
-              </button>
-              <button className={styles.secondary} onClick={() => handleAssignStaff(dept.id)}>
-                Assign staff
-              </button>
-              <button className={styles.secondary} onClick={() => handleEdit(dept.id)}>
-                Edit
-              </button>
-              <button className={styles.danger} onClick={() => handleDelete(dept.id)}>
-                Delete
-              </button>
+              <Button size="small" variant="secondary" onClick={() => handleOpenDetails(dept)}>Details</Button>
+              <Button size="small" variant="secondary" onClick={() => handleAssignStaff(dept.id)}>Assign staff</Button>
+              <Button size="small" variant="secondary" onClick={() => handleEdit(dept.id)}>Edit</Button>
+              <Button size="small" variant="danger" onClick={() => handleDelete(dept.id)}>Delete</Button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
-      <div className={styles.pagination}>
-        <button
-          className={styles.secondary}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-        >
-          Previous
-        </button>
-        <span>
-          Page {page} of {totalPages}
-        </span>
-        <button
-          className={styles.secondary}
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-        >
-          Next
-        </button>
-      </div>
+      <Pagination
+        currentPage={safePage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={filteredDepartments.length}
+        onPageChange={setPage}
+        className={styles.pagination}
+      />
 
-      {activeDepartment && (
-        <div className={styles.drawer}>
-          <div className={styles.drawerHeader}>
-            <h3>{activeDepartment.name} details</h3>
-            <button className={styles.close} onClick={handleCloseDetails}>
-              Close
-            </button>
-          </div>
+      {feedback ? (
+        <Alert type={feedback.type} title={feedback.title} closable onClose={() => setFeedback(null)} className={styles.feedback}>
+          {feedback.message}
+        </Alert>
+      ) : null}
 
+      <Modal isOpen={Boolean(activeDepartment)} onClose={handleCloseDetails} title={activeDepartment ? `${activeDepartment.name} details` : ''} size="large">
+        {activeDepartment ? (
           <div className={styles.drawerBody}>
             <div className={styles.drawerRow}>
               <div>
@@ -250,7 +250,7 @@ export default function DepartmentsPage() {
             <div className={styles.drawerRow}>
               <div>
                 <strong>Status</strong>
-                <div>{activeDepartment.status}</div>
+                <div><Badge variant={activeDepartment.status === 'Active' ? 'success' : 'danger'}>{activeDepartment.status}</Badge></div>
               </div>
               <div>
                 <strong>Staff members</strong>
@@ -266,16 +266,38 @@ export default function DepartmentsPage() {
             </div>
 
             <div className={styles.drawerActions}>
-              <button className={styles.secondary} onClick={() => handleAssignStaff(activeDepartment.id)}>
-                Manage staff
-              </button>
-              <button className={styles.primary} onClick={() => handleEdit(activeDepartment.id)}>
-                Edit department
-              </button>
+              <Button variant="secondary" onClick={() => handleAssignStaff(activeDepartment.id)}>Manage staff</Button>
+              <Button onClick={() => handleEdit(activeDepartment.id)}>Edit department</Button>
             </div>
           </div>
-        </div>
-      )}
+        ) : null}
+      </Modal>
+
+      <Modal
+        isOpen={modal?.type === 'delete'}
+        onClose={() => setModal(null)}
+        title={modal?.title}
+        footer={
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={() => setModal(null)}>Cancel</Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                showFeedback('Department deleted', `Department ${modal.departmentId} deleted (demo).`)
+                setModal(null)
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p>Delete department {modal?.departmentId}? This cannot be undone.</p>
+      </Modal>
+
+      <Modal isOpen={Boolean(modal && modal.type !== 'delete')} onClose={() => setModal(null)} title={modal?.title}>
+        <p>{modal?.message}</p>
+      </Modal>
     </div>
   )
 }

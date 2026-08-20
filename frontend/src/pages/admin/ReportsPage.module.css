@@ -2,8 +2,8 @@
 
 .container {
   padding: 20px;
-  font-family: Arial, sans-serif;
   color: #1f2937;
+  overflow-x: hidden;
 }
 
 .header {
@@ -33,27 +33,13 @@
   flex-wrap: wrap;
 }
 
-.controls label {
-  display: flex;
-  flex-direction: column;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: #374151;
+.filter {
   min-width: 160px;
+  flex: 1 1 160px;
 }
 
-.controls select {
+.filter :global(select) {
   margin-top: 6px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 0.95rem;
-  outline: none;
-}
-
-.controls select:focus {
-  border-color: #60a5fa;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25);
 }
 
 .exportGroup {
@@ -64,47 +50,18 @@
 }
 
 .exportButton {
-  background: #2563eb;
-  border: none;
-  color: white;
-  border-radius: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
-}
-
-.exportButton:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.3);
+  min-width: 160px;
 }
 
 .grid {
   display: grid;
   gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  min-width: 0;
 }
 
-.card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 18px;
-}
-
-.card h2 {
-  margin: 0 0 6px 0;
-  font-size: 1.1rem;
-}
-
-.cardSubtext {
-  margin: 0 0 14px 0;
-  color: #4b5563;
-  font-size: 0.9rem;
-}
-
-.chartContainer {
-  min-height: 220px;
+.chartCard {
+  min-width: 0;
 }
 
 .summaryGrid {
@@ -113,16 +70,8 @@
   gap: 12px;
 }
 
-.summaryValue {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.summaryLabel {
-  margin-top: 4px;
-  font-weight: 600;
-  color: #6b7280;
+.feedback {
+  margin-top: 20px;
 }
 
 @media (max-width: 720px) {
@@ -136,5 +85,16 @@
 
   .controls {
     align-items: flex-start;
+    width: 100%;
+  }
+
+  .filter,
+  .exportGroup,
+  .exportButton {
+    min-width: 100%;
+  }
+
+  .exportGroup {
+    margin-top: 0;
   }
 }
