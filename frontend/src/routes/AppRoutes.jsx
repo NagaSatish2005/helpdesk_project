@@ -60,7 +60,7 @@ export default function AppRoutes() {
         <Route path="/users" element={<Navigate to="/admin/users" replace />} />
         <Route path="/departments" element={<Navigate to="/admin/departments" replace />} />
         <Route path="/reports" element={<Navigate to="/admin/reports" replace />} />
-        <Route path="/settings" element={<Navigate to="/admin/settings" replace />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

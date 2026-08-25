@@ -22,7 +22,7 @@ const MENU_BY_ROLE = {
     { label: "Users", path: "/users", icon: "👥" },
     { label: "Departments", path: "/departments", icon: "🏢" },
     { label: "Reports", path: "/reports", icon: "📊" },
-    { label: "System Settings", path: "/settings", icon: "⚙️" },
+    { label: "System Settings", path: "/admin/settings", icon: "⚙️" },
     { label: "Analytics", path: "/reports", icon: "📈" },
   ],
 };
