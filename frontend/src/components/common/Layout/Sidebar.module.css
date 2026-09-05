@@ -122,17 +122,6 @@
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.roleSelect {
-  width: 100%;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 8px 10px;
-  color: white;
-  font-size: 13px;
-  outline: none;
-}
-
 .collapseButton {
   width: 100%;
   border: none;
@@ -156,8 +145,7 @@
 }
 
 .collapsed .brandInfo,
-.collapsed .label,
-.collapsed .roleSelect {
+.collapsed .label {
   display: none;
 }
 

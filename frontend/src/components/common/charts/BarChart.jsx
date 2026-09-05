@@ -79,8 +79,6 @@ export default function BarChart({
     [showLegend, showGrid, showTooltip]
   )
 
-  const hasContent = !loading && safeData.length > 0 && Array.isArray(bars) && bars.length > 0
-
   return (
     <section className={[styles.wrapper, className].filter(Boolean).join(' ')} aria-label={title ? `${title} chart` : 'Bar chart'}>
       {title ? <div className={styles.title}>{title}</div> : null}

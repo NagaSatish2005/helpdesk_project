@@ -8,17 +8,8 @@ import BarChart from '../../components/common/charts/BarChart'
 import LineChart from '../../components/common/charts/LineChart'
 import PieChart from '../../components/common/charts/PieChart'
 import StatsCard from '../../components/common/charts/StatsCard'
+import useTickets from '../../hooks/useTickets'
 import styles from './ReportsPage.module.css'
-
-const sampleTickets = [
-  { id: 'T-001', category: 'IT', department: 'Support', priority: 'High', status: 'Closed', created: '2026-02-22', resolved: '2026-02-24', staff: 'Alicia', resolutionTimeMins: 240 },
-  { id: 'T-002', category: 'Facilities', department: 'Maintenance', priority: 'Low', status: 'Open', created: '2026-02-25', resolved: null, staff: 'Brian', resolutionTimeMins: null },
-  { id: 'T-003', category: 'IT', department: 'Support', priority: 'Medium', status: 'Closed', created: '2026-02-23', resolved: '2026-02-23', staff: 'Alicia', resolutionTimeMins: 60 },
-  { id: 'T-004', category: 'HR', department: 'HR', priority: 'Medium', status: 'Closed', created: '2026-03-01', resolved: '2026-03-04', staff: 'Chen', resolutionTimeMins: 450 },
-  { id: 'T-005', category: 'Facilities', department: 'Maintenance', priority: 'High', status: 'Closed', created: '2026-03-03', resolved: '2026-03-03', staff: 'Brian', resolutionTimeMins: 120 },
-  { id: 'T-006', category: 'IT', department: 'Support', priority: 'Low', status: 'Open', created: '2026-03-05', resolved: null, staff: 'Alicia', resolutionTimeMins: null },
-  { id: 'T-007', category: 'Finance', department: 'Finance', priority: 'High', status: 'Closed', created: '2026-03-06', resolved: '2026-03-07', staff: 'Dana', resolutionTimeMins: 180 },
-]
 
 const dateOptions = [
   { key: '30d', label: 'Last 30 days' },
@@ -174,6 +165,17 @@ function exportPdf(tickets, filters) {
 }
 
 export default function ReportsPage() {
+  const { tickets } = useTickets()
+  const reportTickets = useMemo(() => tickets.map((ticket) => ({
+    ...ticket,
+    category: ticket.category || 'Unknown',
+    department: ticket.department || ticket.assignedTo?.department || 'Unknown',
+    priority: ticket.priority || 'Unknown',
+    created: ticket.created || '',
+    resolved: ['Resolved', 'Closed'].includes(ticket.status) ? ticket.updated || null : null,
+    staff: ticket.assignedTo?.name || 'Unassigned',
+    resolutionTimeMins: null,
+  })), [tickets])
   const [dateRange, setDateRange] = useState('30d')
   const [department, setDepartment] = useState('All')
   const [staff, setStaff] = useState('All')
@@ -181,7 +183,7 @@ export default function ReportsPage() {
   const [exporting, setExporting] = useState(null)
 
   const filteredTickets = useMemo(() => {
-    let data = filterByDateRange(sampleTickets, dateRange)
+    let data = filterByDateRange(reportTickets, dateRange)
     if (department !== 'All') {
       data = data.filter((ticket) => ticket.department === department)
     }
@@ -189,16 +191,16 @@ export default function ReportsPage() {
       data = data.filter((ticket) => ticket.staff === staff)
     }
     return data
-  }, [dateRange, department, staff])
+  }, [reportTickets, dateRange, department, staff])
 
   const departments = useMemo(
-    () => ['All', ...new Set(sampleTickets.map((t) => t.department))],
-    []
+    () => ['All', ...new Set(reportTickets.map((t) => t.department))],
+    [reportTickets]
   )
 
   const staffMembers = useMemo(
-    () => ['All', ...new Set(sampleTickets.map((t) => t.staff))],
-    []
+    () => ['All', ...new Set(reportTickets.map((t) => t.staff))],
+    [reportTickets]
   )
 
   const categoryData = useMemo(() => {

@@ -1,72 +1,30 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import useTickets from '../../hooks/useTickets'
 import styles from './MyTicketPage.module.css'
-
-const sampleTickets = [
-  {
-    id: 'T-001',
-    title: 'Wi-Fi connectivity issues on 2nd floor',
-    status: 'Open',
-    priority: 'High',
-    updated: '2026-03-07',
-  },
-  {
-    id: 'T-002',
-    title: 'Request for new office chairs',
-    status: 'Closed',
-    priority: 'Medium',
-    updated: '2026-02-20',
-  },
-  {
-    id: 'T-003',
-    title: 'Password reset not working',
-    status: 'In Progress',
-    priority: 'High',
-    updated: '2026-03-05',
-  },
-  {
-    id: 'T-004',
-    title: 'Projector in conference room needs calibration',
-    status: 'Open',
-    priority: 'Low',
-    updated: '2026-03-04',
-  },
-  {
-    id: 'T-005',
-    title: 'Billing invoice discrepancy',
-    status: 'Closed',
-    priority: 'Medium',
-    updated: '2026-02-28',
-  },
-  {
-    id: 'T-006',
-    title: 'Printer paper jam frequently',
-    status: 'In Progress',
-    priority: 'Low',
-    updated: '2026-03-02',
-  },
-  {
-    id: 'T-007',
-    title: 'Software deployment request - analytics tool',
-    status: 'Open',
-    priority: 'High',
-    updated: '2026-03-06',
-  },
-]
 
 const statusOptions = ['All', 'Open', 'In Progress', 'Closed']
 const priorityOptions = ['All', 'High', 'Medium', 'Low']
 
 export default function MyTicketPage() {
   const navigate = useNavigate()
+  const { tickets: sourceTickets } = useTickets()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
   const [priorityFilter, setPriorityFilter] = useState('All')
   const [page, setPage] = useState(1)
   const pageSize = 5
 
+  const tickets = useMemo(() => sourceTickets
+    .filter((ticket) => String(ticket.id || '').startsWith('T-'))
+    .map((ticket) => ({
+      ...ticket,
+      title: ticket.title || ticket.subject || 'Untitled ticket',
+      updated: ticket.updated || ticket.created || '',
+    })), [sourceTickets])
+
   const filtered = useMemo(() => {
-    return sampleTickets
+    return tickets
       .filter((ticket) => {
         if (statusFilter !== 'All' && ticket.status !== statusFilter) return false
         if (priorityFilter !== 'All' && ticket.priority !== priorityFilter) return false
@@ -77,7 +35,7 @@ export default function MyTicketPage() {
         )
       })
       .sort((a, b) => (a.updated < b.updated ? 1 : -1))
-  }, [search, statusFilter, priorityFilter])
+  }, [tickets, search, statusFilter, priorityFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const paged = useMemo(() => {

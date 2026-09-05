@@ -58,7 +58,7 @@ export default function CommentForm({
       }
       // success: clear textarea
       setText('')
-    } catch (submitErr) {
+    } catch {
       // do not clear text on failure; parent can pass `error` to show message
       // ensure validationError is cleared so Alert prop is primary
       setValidationError('')

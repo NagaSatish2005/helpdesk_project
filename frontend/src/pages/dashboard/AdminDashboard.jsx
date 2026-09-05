@@ -1,4 +1,6 @@
 import React from 'react'
+import { departments } from '../../assets/data/departments'
+import useTickets from '../../hooks/useTickets'
 import styles from './AdminDashboard.module.css'
 import {
 	Chart as ChartJS,
@@ -14,19 +16,19 @@ import { Pie } from 'react-chartjs-2'
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
 export default function AdminDashboard() {
-	// sample analytics
+	const { tickets } = useTickets()
 	const analytics = {
-		totalTickets: 120,
-		open: 20,
-		closed: 80,
-		inProgress: 20,
+		totalTickets: tickets.length,
+		open: tickets.filter((ticket) => ticket.status === 'Open').length,
+		closed: tickets.filter((ticket) => ['Resolved', 'Closed'].includes(ticket.status)).length,
+		inProgress: tickets.filter((ticket) => ticket.status === 'In Progress').length,
 	}
 
 	const departmentPerformance = {
-		labels: ['IT', 'Facilities', 'Academic'],
+		labels: departments.slice(0, 3).map((department) => department.name),
 		datasets: [
 			{
-				data: [50, 40, 30],
+				data: departments.slice(0, 3).map((department) => department.ticketStats?.total || 0),
 				backgroundColor: ['#ff6384', '#36a2eb', '#ffcd56'],
 			},
 		],

@@ -74,8 +74,6 @@ export default function LineChart({
     [showLegend, showGrid, showTooltip]
   )
 
-  const hasContent = !loading && safeData.length > 0 && chartDatasets.length > 0
-
   return (
     <section className={[styles.wrapper, className].filter(Boolean).join(' ')} aria-label={title ? `${title} chart` : 'Line chart'}>
       {title ? <div className={styles.title}>{title}</div> : null}

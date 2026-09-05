@@ -1,65 +1,30 @@
 import React, { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import useTickets from '../../hooks/useTickets'
 import styles from './TicketDetailPage.module.css'
-
-const sampleTickets = [
-  {
-    id: 'T-001',
-    title: 'Wi-Fi connectivity issues on 2nd floor',
-    description: 'Users are unable to connect to Wi-Fi in the north wing of the second floor.',
-    category: 'IT',
-    priority: 'High',
-    status: 'Open',
-    created: '2026-03-03',
-    updated: '2026-03-07',
-    requester: { name: 'Emma Wells', email: 'emma.wells@example.com' },
-    assignedTo: { name: 'Alicia Gomez', email: 'alicia.gomez@example.com', department: 'IT Support' },
-    attachments: [
-      { id: 'a1', name: 'wifi-log.txt', size: '48KB' },
-      { id: 'a2', name: 'floor-plan.png', size: '1.2MB' },
-    ],
-    comments: [
-      { id: 'c1', author: 'Alicia Gomez', date: '2026-03-05', message: 'Investigating the access points; looks like a DHCP issue.' },
-      { id: 'c2', author: 'Emma Wells', date: '2026-03-06', message: 'Thank you. The connectivity seems to be improving.' },
-    ],
-    timeline: [
-      { id: 't1', date: '2026-03-03', event: 'Ticket created by Emma Wells' },
-      { id: 't2', date: '2026-03-05', event: 'Assigned to Alicia Gomez' },
-      { id: 't3', date: '2026-03-06', event: 'Work in progress: checking DHCP server' },
-    ],
-  },
-  {
-    id: 'T-002',
-    title: 'Request for new office chairs',
-    description: 'Several chairs on the third floor are broken and need replacement.',
-    category: 'Facilities',
-    priority: 'Medium',
-    status: 'Closed',
-    created: '2026-02-18',
-    updated: '2026-02-20',
-    requester: { name: 'Kamal Jain', email: 'kamal.jain@example.com' },
-    assignedTo: { name: 'Brian Chan', email: 'brian.chan@example.com', department: 'Facilities' },
-    attachments: [],
-    comments: [
-      { id: 'c1', author: 'Brian Chan', date: '2026-02-19', message: 'Ordered 10 new chairs; will update when delivered.' },
-      { id: 'c2', author: 'Kamal Jain', date: '2026-02-20', message: 'Chairs arrived and are being installed.' },
-    ],
-    timeline: [
-      { id: 't1', date: '2026-02-18', event: 'Ticket created by Kamal Jain' },
-      { id: 't2', date: '2026-02-19', event: 'Assigned to Brian Chan' },
-      { id: 't3', date: '2026-02-20', event: 'Resolved and closed' },
-    ],
-  },
-]
 
 export default function TicketDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const ticket = useMemo(() => sampleTickets.find((t) => t.id === id) || sampleTickets[0], [id])
+  const { tickets, updateTicket } = useTickets()
+  const ticket = useMemo(() => {
+    const selectedTicket = tickets.find((candidate) => candidate.id === id)
+    if (!selectedTicket) return null
+
+    return {
+      ...selectedTicket,
+      title: selectedTicket.title || selectedTicket.subject || `Ticket ${selectedTicket.id}`,
+      requester: selectedTicket.requester || { name: 'Not provided', email: 'Not provided' },
+      assignedTo: selectedTicket.assignedTo || { name: 'Unassigned', email: 'Not provided', department: 'Not assigned' },
+      attachments: selectedTicket.attachments || [],
+      comments: selectedTicket.comments || [],
+      timeline: selectedTicket.timeline || [],
+    }
+  }, [tickets, id])
 
   const [status, setStatus] = useState(ticket.status)
   const [commentText, setCommentText] = useState('')
-  const [comments, setComments] = useState(ticket.comments)
+  const [comments, setComments] = useState(ticket?.comments || [])
 
   const addComment = () => {
     if (!commentText.trim()) return
@@ -73,6 +38,27 @@ export default function TicketDetailPage() {
       },
     ])
     setCommentText('')
+  }
+
+  const applyStatus = () => {
+    updateTicket(ticket.id, { status })
+    alert(`Status set to ${status} (demo).`)
+  }
+
+  if (!ticket) {
+    return (
+      <div className={styles.container}>
+        <header className={styles.header}>
+          <div>
+            <h1>Ticket not found</h1>
+            <p className={styles.subtitle}>No ticket exists for ID: {id}</p>
+          </div>
+          <button className={styles.secondary} onClick={() => navigate('/my-tickets')}>
+            Back to my tickets
+          </button>
+        </header>
+      </div>
+    )
   }
 
   return (
@@ -138,7 +124,7 @@ export default function TicketDetailPage() {
                 <option>Closed</option>
               </select>
             </label>
-            <button className={styles.primary} onClick={() => alert(`Status set to ${status} (demo).`)}>
+            <button className={styles.primary} onClick={applyStatus}>
               Apply
             </button>
           </div>

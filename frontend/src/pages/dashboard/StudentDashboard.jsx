@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ActivityFeed from '../../components/dashboard/ActivityFeed'
 import DashboardStats from '../../components/dashboard/DashboardStats'
@@ -6,6 +6,7 @@ import RecentTickets from '../../components/dashboard/RecentTickets'
 import Button from '../../components/common/UI/Button'
 import Card from '../../components/common/UI/Card'
 import useAuth from '../../hooks/useAuth'
+import useTickets from '../../hooks/useTickets'
 import styles from './StudentDashboard.module.css'
 import {
 	Chart as ChartJS,
@@ -20,19 +21,18 @@ import { Pie } from 'react-chartjs-2'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
-const STUDENT_TICKETS = [
-	{ id: 'TCK-001', title: 'Cannot login', status: 'Open', priority: 'High', category: 'Software', created: '2026-03-07' },
-	{ id: 'TCK-002', title: 'Laptop overheating', status: 'In Progress', priority: 'Medium', category: 'Hardware', created: '2026-03-06' },
-	{ id: 'TCK-003', title: 'WiFi slow', status: 'Closed', priority: 'Low', category: 'Network', created: '2026-03-05' },
-]
-
 export default function StudentDashboard() {
 	const navigate = useNavigate()
 	const { user } = useAuth()
+	const { tickets } = useTickets()
 	const studentName = user?.name || user?.fullName || 'Student'
-
-	// This is the existing page-level mock data until a ticket source is available.
-	const studentTickets = STUDENT_TICKETS
+	const studentTickets = useMemo(() => tickets
+		.filter((ticket) => String(ticket.id || '').startsWith('TCK-'))
+		.map((ticket) => ({
+			...ticket,
+			title: ticket.title || ticket.subject || 'Untitled ticket',
+			created: ticket.created || ticket.updated || '',
+		})), [tickets])
 
 	const stats = {
 		totalTickets: studentTickets.length,

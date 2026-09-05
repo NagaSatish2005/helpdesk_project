@@ -7,63 +7,14 @@ import Modal from '../../components/common/UI/Modal'
 import Pagination from '../../components/common/UI/Pagination'
 import Select from '../../components/common/UI/Select'
 import Table from '../../components/common/UI/Table'
+import useUsers from '../../hooks/useUsers'
 import styles from './UserPage.module.css'
-
-const sampleUsers = [
-  {
-    id: 'U-001',
-    name: 'Emma Wells',
-    email: 'emma.wells@example.com',
-    role: 'Student',
-    status: 'Active',
-    created: '2026-01-15',
-  },
-  {
-    id: 'U-002',
-    name: 'Brian Chan',
-    email: 'brian.chan@example.com',
-    role: 'Staff',
-    status: 'Active',
-    created: '2026-01-20',
-  },
-  {
-    id: 'U-003',
-    name: 'Alice Park',
-    email: 'alice.park@example.com',
-    role: 'Admin',
-    status: 'Inactive',
-    created: '2026-02-01',
-  },
-  {
-    id: 'U-004',
-    name: 'Chen Li',
-    email: 'chen.li@example.com',
-    role: 'Staff',
-    status: 'Active',
-    created: '2026-02-10',
-  },
-  {
-    id: 'U-005',
-    name: 'Kamal Jain',
-    email: 'kamal.jain@example.com',
-    role: 'Student',
-    status: 'Active',
-    created: '2026-02-18',
-  },
-  {
-    id: 'U-006',
-    name: 'Dana Smith',
-    email: 'dana.smith@example.com',
-    role: 'Staff',
-    status: 'Inactive',
-    created: '2026-02-22',
-  },
-]
 
 const roles = ['All', 'Student', 'Staff', 'Admin'].map((role) => ({ value: role, label: role }))
 const statuses = ['All', 'Active', 'Inactive'].map((status) => ({ value: status, label: status }))
 
 export default function UserPage() {
+  const { users: sourceUsers, updateUser, deleteUser } = useUsers()
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -72,9 +23,10 @@ export default function UserPage() {
   const [feedback, setFeedback] = useState(null)
 
   const pageSize = 5
+  const users = sourceUsers.filter((user) => String(user.id || '').startsWith('U-'))
 
   const filteredUsers = useMemo(() => {
-    return sampleUsers
+    return users
       .filter((user) => {
         if (roleFilter !== 'All' && user.role !== roleFilter) return false
         if (statusFilter !== 'All' && user.status !== statusFilter) return false
@@ -87,7 +39,7 @@ export default function UserPage() {
         )
       })
       .sort((a, b) => (a.name > b.name ? 1 : -1))
-  }, [search, roleFilter, statusFilter])
+  }, [users, search, roleFilter, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
   const safePage = Math.min(page, totalPages)
@@ -111,6 +63,7 @@ export default function UserPage() {
 
   const handleToggleStatus = (id, currentStatus) => {
     const nextStatus = currentStatus === 'Active' ? 'Inactive' : 'Active'
+    updateUser(id, { status: nextStatus })
     setModal({ type: 'info', title: `${nextStatus} user`, message: `Changing ${id} to ${nextStatus} is still a local demo.` })
   }
 
@@ -227,6 +180,7 @@ export default function UserPage() {
           <div className={styles.modalActions}>
             <Button variant="secondary" onClick={() => setModal(null)}>Cancel</Button>
             <Button variant="danger" onClick={() => {
+              deleteUser(modal.userId)
               showFeedback('User deleted', `User ${modal.userId} deleted (demo).`, 'success')
               setModal(null)
             }}>Delete</Button>

@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
+import useTickets from '../../hooks/useTickets'
 import styles from './TicketListPage.module.css'
 
 export default function TicketListPage() {
 	const [filter, setFilter] = useState('All')
-
-	const tickets = [
-		{ id: 'TCK-001', subject: 'Cannot login', status: 'Open' },
-		{ id: 'TCK-002', subject: 'Laptop overheating', status: 'In Progress' },
-		{ id: 'TCK-003', subject: 'WiFi slow', status: 'Closed' },
-	]
+	const { tickets: sourceTickets } = useTickets()
+	const tickets = sourceTickets.map((ticket) => ({
+		...ticket,
+		subject: ticket.subject || ticket.title || 'Untitled ticket',
+	}))
 
 	const filtered = filter === 'All' ? tickets : tickets.filter(t => t.status === filter)
 

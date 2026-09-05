@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { departments as departmentData } from '../../assets/data/departments'
 import Alert from '../../components/common/UI/Alert'
 import Badge from '../../components/common/UI/Badge'
 import Button from '../../components/common/UI/Button'
@@ -9,59 +10,7 @@ import Pagination from '../../components/common/UI/Pagination'
 import Select from '../../components/common/UI/Select'
 import styles from './DepartmentsPage.module.css'
 
-const sampleDepartments = [
-  {
-    id: 'D-001',
-    name: 'IT Support',
-    description: 'Handles all IT-related support requests and system access issues.',
-    head: 'Alicia Gomez',
-    contact: 'it-support@example.com',
-    status: 'Active',
-    staffCount: 14,
-    ticketStats: { total: 128, open: 21, resolved: 107, avgResolutionMins: 185 },
-  },
-  {
-    id: 'D-002',
-    name: 'Network Team',
-    description: 'Manages network infrastructure, connectivity, and security.',
-    head: 'Brian Chan',
-    contact: 'network@example.com',
-    status: 'Active',
-    staffCount: 9,
-    ticketStats: { total: 76, open: 8, resolved: 68, avgResolutionMins: 210 },
-  },
-  {
-    id: 'D-003',
-    name: 'Hardware Support',
-    description: 'Maintains and repairs hardware devices across the organization.',
-    head: 'Chen Li',
-    contact: 'hardware@example.com',
-    status: 'Active',
-    staffCount: 11,
-    ticketStats: { total: 92, open: 16, resolved: 76, avgResolutionMins: 240 },
-  },
-  {
-    id: 'D-004',
-    name: 'Software Support',
-    description: 'Assists with software installs, licensing, and troubleshooting.',
-    head: 'Dana Smith',
-    contact: 'software@example.com',
-    status: 'Inactive',
-    staffCount: 5,
-    ticketStats: { total: 40, open: 2, resolved: 38, avgResolutionMins: 170 },
-  },
-  {
-    id: 'D-005',
-    name: 'Account Services',
-    description: 'Manages user accounts, permissions, and access control.',
-    head: 'Emma Wells',
-    contact: 'accounts@example.com',
-    status: 'Active',
-    staffCount: 8,
-    ticketStats: { total: 65, open: 7, resolved: 58, avgResolutionMins: 195 },
-  },
-]
-
+const availableDepartments = departmentData.filter((department) => department.ticketStats && department.head)
 const statuses = ['All', 'Active', 'Inactive'].map((status) => ({ value: status, label: status }))
 
 export default function DepartmentsPage() {
@@ -74,7 +23,7 @@ export default function DepartmentsPage() {
   const pageSize = 4
 
   const filteredDepartments = useMemo(() => {
-    return sampleDepartments
+    return availableDepartments
       .filter((dept) => {
         if (statusFilter !== 'All' && dept.status !== statusFilter) return false
         if (!search) return true

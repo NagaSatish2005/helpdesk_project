@@ -43,7 +43,7 @@ export default function TicketForm({
   const [validation, setValidation] = useState({})
 
   useEffect(() => {
-    if (initialData) setForm((prev) => ({ ...emptyState, ...initialData }))
+    if (initialData) setForm(() => ({ ...emptyState, ...initialData }))
     else setForm(emptyState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData])

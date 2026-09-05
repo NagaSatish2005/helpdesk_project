@@ -1,13 +1,25 @@
 import React, { useState } from 'react'
+import { categories } from '../../assets/data/categories'
+import useTickets from '../../hooks/useTickets'
 import styles from './CreateTicketPage.module.css'
 
 export default function CreateTicketPage() {
+	const { addTicket } = useTickets()
 	const [category, setCategory] = useState('Hostel')
 	const [details, setDetails] = useState('')
 
 	const handleSubmit = (e) => {
 		e.preventDefault()
-		// here we'd normally call an API
+		const now = new Date().toISOString().slice(0, 10)
+		addTicket({
+			title: details.trim() || 'Untitled ticket',
+			description: details.trim(),
+			category,
+			priority: 'Medium',
+			status: 'Open',
+			created: now,
+			updated: now,
+		})
 		alert(`Ticket submitted:\nCategory: ${category}\nDetails: ${details}`)
 	}
 
@@ -21,10 +33,11 @@ export default function CreateTicketPage() {
 					value={category}
 					onChange={(e) => setCategory(e.target.value)}
 				>
-					<option>Hostel</option>
-					<option>Transport</option>
-					<option>Fees</option>
-					<option>It</option>
+					{categories.map((ticketCategory) => (
+						<option key={ticketCategory.id} value={ticketCategory.name}>
+							{ticketCategory.name}
+						</option>
+					))}
 				</select>
 
 				<label htmlFor="details">Details</label>

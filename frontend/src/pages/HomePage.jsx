@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './HomePage.module.css';
-import logo from '../assets/logo.png';
 
 export default function HomePage() {
   const canvasRef = useRef(null);

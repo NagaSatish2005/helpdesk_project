@@ -6,7 +6,6 @@ import styles from './Layout.module.css'
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [role, setRole] = useState('Student')
 
   useEffect(() => {
     const updateSidebarState = () => {
@@ -40,10 +39,8 @@ export default function Layout() {
 
       <div className={styles.contentWrapper}>
         <Sidebar
-          role={role}
           isOpen={sidebarOpen}
           onClose={handleCloseSidebar}
-          onRoleChange={setRole}
         />
 
         <main className={styles.mainContent}>

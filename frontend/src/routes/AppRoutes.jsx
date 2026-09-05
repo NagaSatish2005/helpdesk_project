@@ -36,15 +36,23 @@ export default function AppRoutes() {
       <Route path="/server-error" element={<ServerErrorPage />} />
 
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
-        <Route path="/dashboard" element={<AdminDashboard />} />
-        <Route path="/student" element={<StudentDashboard />} />
-        <Route path="/staff" element={<StaffDashboard />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route element={<RoleRoute allowedRoles={['Admin']} />}>
+          <Route path="/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Route>
+        <Route element={<RoleRoute allowedRoles={['Student']} />}>
+          <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/tickets/create" element={<CreateTicketPage />} />
+          <Route path="/my-tickets" element={<MyTicketPage />} />
+        </Route>
+        <Route element={<RoleRoute allowedRoles={['Staff']} />}>
+          <Route path="/staff" element={<StaffDashboard />} />
+        </Route>
+        <Route element={<RoleRoute allowedRoles={['Staff', 'Admin']} />}>
+          <Route path="/tickets" element={<TicketListPage />} />
+        </Route>
 
-        <Route path="/tickets" element={<TicketListPage />} />
-        <Route path="/tickets/create" element={<CreateTicketPage />} />
         <Route path="/create-ticket" element={<Navigate to="/tickets/create" replace />} />
-        <Route path="/my-tickets" element={<MyTicketPage />} />
         <Route path="/tickets/:id" element={<TicketDetailPage />} />
 
         <Route path="/profile" element={<ProfilePage />} />
@@ -59,7 +67,9 @@ export default function AppRoutes() {
 
         <Route path="/users" element={<Navigate to="/admin/users" replace />} />
         <Route path="/departments" element={<Navigate to="/admin/departments" replace />} />
-        <Route path="/reports" element={<Navigate to="/admin/reports" replace />} />
+        <Route element={<RoleRoute allowedRoles={['Staff', 'Admin']} />}>
+          <Route path="/reports" element={<ReportsPage />} />
+        </Route>
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
 

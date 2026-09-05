@@ -5,11 +5,13 @@ import Badge from '../common/UI/badge'
 import styles from './TicketCard.module.css'
 
 function formatDate(value) {
+  if (value == null || value === '') return null
+
   try {
     const d = new Date(value)
     if (Number.isNaN(d.getTime())) return null
     return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-  } catch (e) {
+  } catch {
     return null
   }
 }
@@ -52,7 +54,7 @@ export default function TicketCard({
     </div>
   )
 
-  function handleClick(e) {
+  function handleClick() {
     if (onClick) onClick(ticket)
   }
 

@@ -1,4 +1,5 @@
 import React from 'react'
+import useTickets from '../../hooks/useTickets'
 import styles from './StaffDashboard.module.css'
 import {
 	Chart as ChartJS,
@@ -14,11 +15,12 @@ import { Pie } from 'react-chartjs-2'
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
 export default function StaffDashboard() {
-	// sample dataset
+	const { tickets } = useTickets()
+	const assignedTickets = tickets.filter((ticket) => ticket.assignedTo)
 	const workload = {
-		total: 24,
-		assigned: 18,
-		pending: 6,
+		total: tickets.length,
+		assigned: assignedTickets.length,
+		pending: tickets.length - assignedTickets.length,
 	}
 
 	const statusData = {
@@ -41,11 +43,14 @@ export default function StaffDashboard() {
 		],
 	}
 
-	const tickets = [
-		{ id: 'STF-101', student: 'Alice', issue: 'Email not working', status: 'Assigned' },
-		{ id: 'STF-102', student: 'Bob', issue: 'Lab computer crash', status: 'Pending' },
-		{ id: 'STF-103', student: 'Charlie', issue: 'Printer jam', status: 'Assigned' },
-	]
+	const visibleTickets = tickets.map((ticket) => ({
+		...ticket,
+		student: ticket.requester?.name || 'Unassigned requester',
+		issue: ticket.title || ticket.subject || 'Untitled ticket',
+		workStatus: ['Resolved', 'Closed'].includes(ticket.status)
+			? 'Resolved'
+			: ticket.assignedTo ? 'Assigned' : 'Pending',
+	}))
 
 	return (
 		<div className={styles.container}>
@@ -93,12 +98,12 @@ export default function StaffDashboard() {
 						</tr>
 					</thead>
 					<tbody>
-						{tickets.map((t) => (
+							{visibleTickets.map((t) => (
 							<tr key={t.id}>
 								<td>{t.id}</td>
 								<td>{t.student}</td>
 								<td>{t.issue}</td>
-								<td>{t.status}</td>
+								<td>{t.workStatus}</td>
 								<td className={styles.actions}>
 									<button className="update" onClick={() => alert('Update ticket')}>
 										Update

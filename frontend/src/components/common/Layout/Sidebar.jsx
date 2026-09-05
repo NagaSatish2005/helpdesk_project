@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
+import useAuth from "../../../hooks/useAuth";
 import styles from "./Sidebar.module.css";
 
 const MENU_BY_ROLE = {
@@ -27,7 +28,9 @@ const MENU_BY_ROLE = {
   ],
 };
 
-export default function Sidebar({ role = "Student", isOpen = true, onClose, onRoleChange }) {
+export default function Sidebar({ isOpen = true, onClose }) {
+  const { user } = useAuth();
+  const role = user?.role || "Student";
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("helpdesk_sidebar_collapsed") === "true";
@@ -53,11 +56,6 @@ export default function Sidebar({ role = "Student", isOpen = true, onClose, onRo
 
   const handleToggleCollapsed = () => {
     setIsCollapsed((prev) => !prev);
-  };
-
-  const handleRoleChange = (event) => {
-    const nextRole = event.target.value;
-    if (onRoleChange) onRoleChange(nextRole);
   };
 
   return (
@@ -90,16 +88,6 @@ export default function Sidebar({ role = "Student", isOpen = true, onClose, onRo
         </nav>
 
         <div className={styles.footer}>
-          <select
-            className={styles.roleSelect}
-            value={role}
-            onChange={handleRoleChange}
-            aria-label="Select role"
-          >
-            <option value="Student">Student</option>
-            <option value="Staff">Staff</option>
-            <option value="Admin">Admin</option>
-          </select>
           <button
             type="button"
             className={styles.collapseButton}

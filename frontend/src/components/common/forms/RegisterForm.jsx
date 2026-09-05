@@ -73,7 +73,8 @@ export default function RegisterForm({ onSubmit, loading = false, error, classNa
     const ok = validate()
     if (!ok) return
 
-    const { confirmPassword, ...submitData } = form
+    const submitData = { ...form }
+    delete submitData.confirmPassword
     if (onSubmit) onSubmit(submitData)
   }
 

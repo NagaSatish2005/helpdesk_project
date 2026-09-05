@@ -13,7 +13,7 @@ function formatDate(value) {
     const d = new Date(value)
     if (Number.isNaN(d.getTime())) return null
     return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  } catch (e) {
+  } catch {
     return null
   }
 }
