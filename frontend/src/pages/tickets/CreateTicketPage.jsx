@@ -25,8 +25,12 @@ export default function CreateTicketPage() {
 
 	return (
 		<div className={styles.container}>
-			<h1>Submit a Ticket</h1>
-			<form onSubmit={handleSubmit}>
+			<div className={styles.heading}>
+				<span className={styles.eyebrow}>Support centre</span>
+				<h1>Submit a ticket</h1>
+				<p>Share the details and the right team will pick it up.</p>
+			</div>
+			<form className={styles.form} onSubmit={handleSubmit}>
 				<label htmlFor="category">Category</label>
 				<select
 					id="category"
@@ -50,7 +54,7 @@ export default function CreateTicketPage() {
 
 				<label htmlFor="attachment">Attachment (optional)</label>
 			<input type="file" id="attachment" />
-				<button type="submit">Submit Ticket</button>
+				<button className={styles.submit} type="submit">Submit ticket</button>
 			</form>
 		</div>
 	)

@@ -1,6 +1,4 @@
-.card {
-  padding: 12px 14px;
-}
+.card { padding: 16px; border-left: 3px solid #d0d5dd; }
 
 .compact {
   padding: 8px 10px;
@@ -27,8 +25,8 @@
 
 .title {
   font-size: 15px;
-  font-weight: 700;
-  color: #111827;
+  font-weight: 800;
+  color: #172033;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -64,7 +62,7 @@
 
 .card[role="button"] { cursor: pointer }
 .card[role="button"]:focus { outline: 2px solid rgba(37,99,235,0.12); outline-offset: 2px }
-.card[role="button"]:hover { transform: translateY(-2px); transition: transform 160ms ease }
+.card[role="button"]:hover { border-left-color: #3159d4; transform: translateY(-3px); transition: transform 160ms ease }
 
 @media (max-width: 520px) {
   .title { font-size: 14px }

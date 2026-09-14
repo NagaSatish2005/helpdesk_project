@@ -15,7 +15,7 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(248, 250, 252, 0.8);
   backdrop-filter: blur(2px);
 }
 
@@ -55,7 +55,7 @@
 }
 
 .primary {
-  color: #2563eb;
+  color: #3159d4;
 }
 
 .secondary {

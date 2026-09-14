@@ -1,11 +1,10 @@
-.card {
-  padding: 12px 16px;
-}
+.card { position: relative; min-height: 148px; padding: 18px; overflow: hidden; border: 1px solid #e4e7ec; }
+.card::after { content: ""; position: absolute; right: -26px; bottom: -36px; width: 116px; height: 116px; border-radius: 50%; background: currentColor; opacity: .055; pointer-events: none; }
 
 .inner {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
 .header {
@@ -15,9 +14,9 @@
 }
 
 .iconWrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -71,16 +70,11 @@
   color: #6b7280; /* gray */
 }
 
-.title {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 600;
-}
+.title { font-size: 12px; color: #667085; font-weight: 700; letter-spacing: .02em; }
 
 .value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #111827;
+  font: 800 32px/1 Manrope, Inter, sans-serif;
+  color: #172033;
 }
 
 .trendLabel {
@@ -89,11 +83,11 @@
 }
 
 /* Variants affect the icon/accent only */
-.variant_primary .iconWrap { background: linear-gradient(135deg,#eff6ff,#e0f2fe); color: #2563eb; }
-.variant_success .iconWrap { background: linear-gradient(135deg,#ecfdf5,#d1fae5); color: #16a34a; }
-.variant_warning .iconWrap { background: linear-gradient(135deg,#fff7ed,#ffedd5); color: #f59e0b; }
-.variant_danger .iconWrap { background: linear-gradient(135deg,#fff1f2,#fee2e2); color: #dc2626; }
-.variant_info .iconWrap { background: linear-gradient(135deg,#eef2ff,#e0e7ff); color: #4f46e5; }
+.variant_primary .iconWrap { background: linear-gradient(135deg,#e6edff,#cbd8ff); color: #3159d4; }
+.variant_success .iconWrap { background: linear-gradient(135deg,#e5fbf0,#c6f2dc); color: #027a48; }
+.variant_warning .iconWrap { background: linear-gradient(135deg,#fff6df,#ffe7ad); color: #b54708; }
+.variant_danger .iconWrap { background: linear-gradient(135deg,#fff0ef,#ffd3cf); color: #b42318; }
+.variant_info .iconWrap { background: linear-gradient(135deg,#e9f4ff,#cfe7ff); color: #175cd3; }
 .variant_secondary .iconWrap { background: #f3f4f6; color: #374151; }
 
 /* clickable appearance */

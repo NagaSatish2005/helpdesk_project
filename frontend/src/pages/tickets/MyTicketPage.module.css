@@ -1,9 +1,7 @@
 /* My Tickets page styles */
 
 .container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  color: #111827;
+  color: #172033;
 }
 
 .header {
@@ -13,11 +11,12 @@
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 20px;
+  padding: 4px 0;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 1.8rem;
+  font: 800 28px/1.2 Manrope, Inter, sans-serif;
 }
 
 .header p {
@@ -30,15 +29,20 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 8px 20px rgba(16,24,40,.04);
 }
 
 .search {
   flex: 1;
   min-width: 220px;
   padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
+  border-radius: 9px;
+  border: 1px solid #d0d5dd;
   outline: none;
 }
 
@@ -75,22 +79,29 @@
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(16,24,40,.06);
 }
 
 .table th,
 .table td {
   padding: 12px 12px;
-  border: 1px solid #e5e7eb;
+  border-bottom: 1px solid #eaecf0;
   text-align: left;
 }
 
 .table th {
-  background: #f9fafb;
+  background: #f8f9fc;
   color: #374151;
-  font-weight: 700;
+  font-weight: 800;
 }
+.table tbody tr { transition: background .16s ease; }.table tbody tr:hover { background: #f6f8ff; }
 
 .ticketId {
   font-weight: 700;
@@ -171,12 +182,12 @@
   gap: 10px;
   align-items: center;
   padding-top: 10px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 0;
 }
 
 button {
   padding: 8px 14px;
-  border-radius: 10px;
+  border-radius: 9px;
   border: 1px solid transparent;
   cursor: pointer;
   font-weight: 700;
@@ -194,7 +205,7 @@ button:disabled {
 }
 
 .primary {
-  background: #2563eb;
+  background: #3159d4;
   color: white;
 }
 

@@ -1,8 +1,8 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 4px;
+  gap: 22px;
+  padding: 0;
   min-width: 0;
 }
 
@@ -12,17 +12,22 @@
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
+  padding: 28px 30px;
+  border-radius: 18px;
+  color: #fff;
+  background: linear-gradient(125deg, #18264e, #3159d4 140%);
+  box-shadow: 0 16px 32px rgba(32, 61, 148, .20);
 }
 
 .header h1 {
   margin: 0 0 6px;
-  color: #111827;
-  font-size: 1.8rem;
+  color: #fff;
+  font: 800 28px/1.2 Manrope, Inter, sans-serif;
 }
 
 .header p {
   margin: 0;
-  color: #6b7280;
+  color: #d3dcfa;
 }
 
 .charts {

@@ -1,9 +1,7 @@
 /* Profile page styles */
 
 .container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  color: #111827;
+  color: #172033;
 }
 
 .header {
@@ -17,7 +15,7 @@
 
 .header h1 {
   margin: 0;
-  font-size: 1.9rem;
+  font: 800 28px/1.2 Manrope, Inter, sans-serif;
 }
 
 .header p {
@@ -33,9 +31,10 @@
 
 .card {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 18px;
+  border: 1px solid #e4e7ec;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(16,24,40,.05);
 }
 
 .profileHeader {
@@ -222,7 +221,7 @@ button:disabled {
 }
 
 .primary {
-  background: #2563eb;
+  background: #3159d4;
   color: white;
 }
 

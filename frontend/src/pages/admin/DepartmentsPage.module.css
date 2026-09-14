@@ -1,8 +1,7 @@
 /* Departments page styles */
 
 .container {
-  padding: 20px;
-  color: #111827;
+  color: #172033;
 }
 
 .header {
@@ -16,7 +15,7 @@
 
 .header h1 {
   margin: 0;
-  font-size: 1.8rem;
+  font: 800 28px/1.2 Manrope, Inter, sans-serif;
 }
 
 .header p {
@@ -58,7 +57,7 @@
 }
 
 .card {
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .row {

@@ -1,9 +1,7 @@
 /* Edit profile page styles */
 
 .container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  color: #111827;
+  color: #172033;
 }
 
 .header {
@@ -12,7 +10,7 @@
 
 .header h1 {
   margin: 0;
-  font-size: 1.9rem;
+  font: 800 28px/1.2 Manrope, Inter, sans-serif;
 }
 
 .header p {
@@ -167,7 +165,7 @@ button:disabled {
 }
 
 .primary {
-  background: #2563eb;
+  background: #3159d4;
   color: white;
 }
 

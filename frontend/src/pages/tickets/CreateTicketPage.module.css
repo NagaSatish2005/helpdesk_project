@@ -1,36 +1,29 @@
-/* styles for create ticket page */
 .container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  max-width: 600px;
-  margin: 0 auto;
+  max-width: 720px;
+  margin: 8px auto;
+  padding: 32px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(16,24,40,.04), 0 12px 28px rgba(16,24,40,.06);
 }
-form {
+.heading { margin-bottom: 28px; }
+.heading h1 { margin: 5px 0 8px; color: #172033; font: 800 28px/1.2 Manrope, Inter, sans-serif; }
+.heading p { margin: 0; color: #667085; }
+.eyebrow { color: #3159d4; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.form {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
-label {
-  font-weight: bold;
+.form label { color: #344054; font-size: 14px; font-weight: 700; margin-top: 8px; }
+.form input,
+.form textarea,
+.form select {
+  width: 100%; padding: 11px 12px; border: 1px solid #d0d5dd; border-radius: 9px; color: #172033; background: #fff; outline: none;
 }
-input[type="text"],
-textarea,
-select {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-textarea {
-  resize: vertical;
-}
-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-button:hover {
-  background-color: #0056b3;
-}
+.form input:focus, .form textarea:focus, .form select:focus { border-color: #3159d4; box-shadow: 0 0 0 3px rgba(49,89,212,.12); }
+.form textarea { min-height: 128px; resize: vertical; }
+.submit { align-self: flex-start; margin-top: 14px; padding: 12px 18px; border: 0; border-radius: 9px; background: #3159d4; color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 8px 18px rgba(49,89,212,.2); }
+.submit:hover { background: #2447b6; }
+@media (max-width: 600px) { .container { margin: 0; padding: 24px 18px; } .submit { width: 100%; } }

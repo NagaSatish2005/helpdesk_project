@@ -105,10 +105,10 @@ export default function StaffDashboard() {
 								<td>{t.issue}</td>
 								<td>{t.workStatus}</td>
 								<td className={styles.actions}>
-									<button className="update" onClick={() => alert('Update ticket')}>
+									<button className={styles.update} onClick={() => alert('Update ticket')}>
 										Update
 									</button>
-									<button className="resolve" onClick={() => alert('Resolve ticket')}>
+									<button className={styles.resolve} onClick={() => alert('Resolve ticket')}>
 										Resolve
 									</button>
 								</td>

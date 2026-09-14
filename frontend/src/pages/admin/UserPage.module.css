@@ -1,8 +1,7 @@
 /* Users page styles */
 
 .container {
-  padding: 20px;
-  color: #111827;
+  color: #172033;
 }
 
 .header {
@@ -16,7 +15,7 @@
 
 .header h1 {
   margin: 0;
-  font-size: 1.8rem;
+  font: 800 28px/1.2 Manrope, Inter, sans-serif;
 }
 
 .header p {
@@ -48,6 +47,7 @@
 
 .tableCard {
   margin-bottom: 18px;
+  border-radius: 14px;
 }
 
 .userId {

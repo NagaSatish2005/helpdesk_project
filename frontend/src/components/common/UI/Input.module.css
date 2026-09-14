@@ -12,7 +12,7 @@
 .label {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: #344054;
 }
 
 .required {
@@ -29,11 +29,11 @@
 
 .input {
   width: 100%;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 9px;
+  padding: 11px 12px;
   font-size: 14px;
-  color: #111827;
+  color: #172033;
   background: #ffffff;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
   outline: none;
@@ -48,13 +48,12 @@
 }
 
 .input:hover:not(:disabled) {
-  border-color: #93c5fd;
+  border-color: #9db4ff;
 }
 
 .input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-  transform: translateY(-1px);
+  border-color: #3159d4;
+  box-shadow: 0 0 0 3px rgba(49, 89, 212, 0.12);
 }
 
 .inputError {

@@ -1,70 +1,21 @@
-/* styles for ticket list page */
-
-.container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-.filters {
-  margin-bottom: 20px;
-  display: flex;
-  gap: 15px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-}
-
-th {
-  background: #f5f5f5;
-  text-align: left;
-}
-
-/* status badges */
-.status {
-  padding: 4px 8px;
-  border-radius: 4px;
-  color: white;
-  font-weight: bold;
-}
-
-.status.Open {
-  background-color: #ff6384;
-}
-
-.status.inProgress {
-  background-color: #ffcd56;
-}
-
-.status.Closed {
-  background-color: #4bc0c0;
-}
-
-/* action buttons */
-.actions button {
-  margin-right: 5px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.actions .view {
-  background-color: #007bff;
-  color: white;
-}
-
-.actions .edit {
-  background-color: #ffc107;
-}
-
-.actions .delete {
-  background-color: #dc3545;
-  color: white;
-}
+.container { color: #172033; }
+.heading span { color: #3159d4; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.heading h1 { margin: 5px 0 24px; font: 800 28px/1.2 Manrope, Inter, sans-serif; }
+.filters { display: flex; gap: 12px; margin-bottom: 18px; }
+.filters label { display: flex; align-items: center; gap: 8px; color: #475467; font-size: 14px; font-weight: 700; }
+.filters select { padding: 9px 34px 9px 10px; border: 1px solid #d0d5dd; border-radius: 8px; background: #fff; color: #344054; }
+.tableWrap { overflow-x: auto; border: 1px solid #e4e7ec; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px rgba(16,24,40,.05); }
+.table { width: 100%; min-width: 620px; border-collapse: collapse; }
+.table th, .table td { padding: 14px 16px; border-bottom: 1px solid #eaecf0; }
+.table th { background: #f8f9fc; color: #475467; text-align: left; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.table tbody tr:hover { background: #fafbff; }
+.status { display: inline-flex; padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.status.Open { background: #fff4e5; color: #b54708; }
+.status.InProgress { background: #eef4ff; color: #3538cd; }
+.status.Closed { background: #ecfdf3; color: #027a48; }
+.actions { display: flex; gap: 8px; }
+.actions button { padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 700; }
+.view { border: 1px solid #b7c8ff; background: #eef2ff; color: #3159d4; }
+.edit { border: 1px solid #fedf89; background: #fffaeb; color: #b54708; }
+.delete { border: 1px solid #fecdca; background: #fef3f2; color: #b42318; }
+@media (max-width: 600px) { .heading h1 { font-size: 24px; } }

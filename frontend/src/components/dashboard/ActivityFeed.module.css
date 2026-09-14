@@ -16,7 +16,7 @@
   align-items: flex-start;
   gap: 12px;
   min-width: 0;
-  padding: 14px 0;
+  padding: 15px 4px;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -37,8 +37,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #eff6ff;
-  color: #2563eb;
+  background: #eef2ff;
+  color: #3159d4;
 }
 
 .content {
@@ -76,7 +76,7 @@
 }
 
 .clickable:hover {
-  background: #f9fafb;
+  background: #f5f7fb;
 }
 
 .clickable:focus {

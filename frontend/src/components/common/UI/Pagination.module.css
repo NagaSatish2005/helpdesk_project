@@ -27,7 +27,7 @@
   height: 38px;
   padding: 0 12px;
   border: 1px solid #d1d5db;
-  border-radius: 999px;
+  border-radius: 9px;
   background: #ffffff;
   color: #111827;
   cursor: pointer;
@@ -48,8 +48,8 @@
 }
 
 .active {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #3159d4;
+  border-color: #3159d4;
   color: #ffffff;
 }
 

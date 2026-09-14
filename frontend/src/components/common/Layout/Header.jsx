@@ -59,6 +59,7 @@ export default function Header({ onToggleSidebar }) {
 			</div>
 
 			<form className={styles.search} onSubmit={handleSearch}>
+				<svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="6" /><path d="m16 16 4 4" /></svg>
 				<input
 					type="text"
 					placeholder="Search ticket ID, subject, user..."
@@ -68,12 +69,13 @@ export default function Header({ onToggleSidebar }) {
 			</form>
 
 			<div className={styles.actions}>
-				<div className={styles.iconButton} onClick={() => setIsNotifOpen((v) => !v)}>
-					🔔
+				<button type="button" className={styles.iconButton} onClick={() => setIsNotifOpen((v) => !v)} aria-label="Notifications">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M18 9a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
 					<span className={styles.badge}>{unreadCount}</span>
-				</div>
+				</button>
 				{isNotifOpen && (
-					<div className={styles.dropdown}>
+					<div className={`${styles.dropdown} ${styles.notificationDropdown}`}>
+						<div className={styles.dropdownHeader}>Notifications</div>
 						{notifications.map((n) => (
 							<div key={n.id} className={styles.dropdownItem}>
 								<span>{n.text}</span>
@@ -83,15 +85,16 @@ export default function Header({ onToggleSidebar }) {
 					</div>
 				)}
 
-				<div className={styles.profile} onClick={() => setIsProfileOpen((v) => !v)}>
+				<button type="button" className={styles.profile} onClick={() => setIsProfileOpen((v) => !v)} aria-label="Open user menu">
 					<div className={styles.avatar}>{avatar}</div>
 					<div className={styles.profileInfo}>
 						<div className={styles.profileName}>{profileName}</div>
 						<div className={styles.profileRole}>{profileRole}</div>
 					</div>
-				</div>
+					<svg className={styles.chevron} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
+				</button>
 				{isProfileOpen && (
-					<div className={styles.dropdown}>
+					<div className={`${styles.dropdown} ${styles.profileDropdown}`}>
 						<div className={styles.dropdownItem} onClick={() => alert('View profile')}>
 							<span>View Profile</span>
 						</div>

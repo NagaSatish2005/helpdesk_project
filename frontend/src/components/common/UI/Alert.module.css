@@ -3,9 +3,10 @@
   align-items: flex-start;
   gap: 12px;
   width: 100%;
-  border-radius: 14px;
-  padding: 14px 16px;
+  border-radius: 11px;
+  padding: 15px 16px;
   border: 1px solid transparent;
+  box-shadow: 0 5px 14px rgba(16,24,40,.04);
   animation: fadeIn 180ms ease-out;
 }
 
@@ -21,7 +22,7 @@
 }
 
 .title {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
 }
 
