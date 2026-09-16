@@ -3,7 +3,7 @@ package com.example.backend.dto.response;
 public class AuthResponse {
 
     private String token;
-    private Long userId;
+    private Long id;
     private String name;
     private String email;
     private String role;
@@ -11,9 +11,9 @@ public class AuthResponse {
     public AuthResponse() {
     }
 
-    public AuthResponse(String token, Long userId, String name, String email, String role) {
+    public AuthResponse(String token, Long id, String name, String email, String role) {
         this.token = token;
-        this.userId = userId;
+        this.id = id;
         this.name = name;
         this.email = email;
         this.role = role;
@@ -27,12 +27,12 @@ public class AuthResponse {
         this.token = token;
     }
 
-    public Long getUserId() {
-        return userId;
+    public Long getId() {
+        return id;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {

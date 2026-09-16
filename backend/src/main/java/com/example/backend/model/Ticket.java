@@ -30,7 +30,7 @@ public class Ticket {
     private TicketPriority priority;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 32, columnDefinition = "VARCHAR(32)")
     private TicketCategory category;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -38,8 +38,8 @@ public class Ticket {
     private User requester;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_staff_id")
-    private User assignedStaff;
+    @JoinColumn(name = "assigned_to_id")
+    private User assignedTo;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -64,6 +64,23 @@ public class Ticket {
     }
 
     public Ticket() {
+    }
+
+    public Ticket(
+            String title,
+            String description,
+            TicketStatus status,
+            TicketPriority priority,
+            TicketCategory category,
+            User requester,
+            User assignedTo) {
+        this.title = title;
+        this.description = description;
+        this.status = status;
+        this.priority = priority;
+        this.category = category;
+        this.requester = requester;
+        this.assignedTo = assignedTo;
     }
 
     public Long getId() {
@@ -122,12 +139,20 @@ public class Ticket {
         this.requester = requester;
     }
 
+    public User getAssignedTo() {
+        return assignedTo;
+    }
+
+    public void setAssignedTo(User assignedTo) {
+        this.assignedTo = assignedTo;
+    }
+
     public User getAssignedStaff() {
-        return assignedStaff;
+        return getAssignedTo();
     }
 
     public void setAssignedStaff(User assignedStaff) {
-        this.assignedStaff = assignedStaff;
+        setAssignedTo(assignedStaff);
     }
 
     public LocalDateTime getCreatedAt() {

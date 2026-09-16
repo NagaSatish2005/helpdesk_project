@@ -15,11 +15,8 @@ public class TicketResponse {
     private TicketPriority priority;
     private TicketCategory category;
 
-    private Long requesterId;
-    private String requesterName;
-
-    private Long assignedStaffId;
-    private String assignedStaffName;
+    private UserResponse creator;
+    private UserResponse assignedTo;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -75,36 +72,20 @@ public class TicketResponse {
         this.category = category;
     }
 
-    public Long getRequesterId() {
-        return requesterId;
+    public UserResponse getCreator() {
+        return creator;
     }
 
-    public void setRequesterId(Long requesterId) {
-        this.requesterId = requesterId;
+    public void setCreator(UserResponse creator) {
+        this.creator = creator;
     }
 
-    public String getRequesterName() {
-        return requesterName;
+    public UserResponse getAssignedTo() {
+        return assignedTo;
     }
 
-    public void setRequesterName(String requesterName) {
-        this.requesterName = requesterName;
-    }
-
-    public Long getAssignedStaffId() {
-        return assignedStaffId;
-    }
-
-    public void setAssignedStaffId(Long assignedStaffId) {
-        this.assignedStaffId = assignedStaffId;
-    }
-
-    public String getAssignedStaffName() {
-        return assignedStaffName;
-    }
-
-    public void setAssignedStaffName(String assignedStaffName) {
-        this.assignedStaffName = assignedStaffName;
+    public void setAssignedTo(UserResponse assignedTo) {
+        this.assignedTo = assignedTo;
     }
 
     public LocalDateTime getCreatedAt() {
