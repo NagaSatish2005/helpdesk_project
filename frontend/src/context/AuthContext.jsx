@@ -2,91 +2,93 @@
 import React, { createContext, useContext, useState } from 'react'
 
 const AUTH_STORAGE_KEY = 'helpdesk.auth'
-const USERS_STORAGE_KEY = 'helpdesk.mockUsers'
-
-const MOCK_USERS = [
-  { email: 'student@example.com', password: 'password', name: 'Student User', role: 'Student' },
-  { email: 'staff@example.com', password: 'password', name: 'Staff User', role: 'Staff' },
-  { email: 'admin@example.com', password: 'password', name: 'Admin User', role: 'Admin' },
-]
+const AUTH_SESSION_KEY = 'helpdesk.auth.session'
+const AUTH_API_URL = 'http://localhost:8081/api/auth'
 
 const AuthContext = createContext(null)
 
-function readStoredUser() {
+function readStoredSession() {
   try {
-    const stored = window.localStorage.getItem(AUTH_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : null
+    const stored = window.localStorage.getItem(AUTH_STORAGE_KEY) || window.sessionStorage.getItem(AUTH_SESSION_KEY)
+    if (!stored) return null
+
+    const session = JSON.parse(stored)
+    return session?.token && session?.user ? session : null
   } catch {
     return null
   }
 }
 
-function readStoredUsers() {
-  try {
-    const stored = window.localStorage.getItem(USERS_STORAGE_KEY)
-    return stored ? [...MOCK_USERS, ...JSON.parse(stored)] : MOCK_USERS
-  } catch {
-    return MOCK_USERS
+async function parseResponse(response) {
+  const payload = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(payload?.message || `Request failed with status ${response.status}.`)
   }
+  return payload
+}
+
+function mapRole(role) {
+  const roles = {
+    STUDENT: 'Student',
+    STAFF: 'Staff',
+    ADMIN: 'Admin',
+  }
+
+  return roles[role] || role
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(readStoredUser)
-  const [users, setUsers] = useState(readStoredUsers)
+  const [session, setSession] = useState(readStoredSession)
 
   const login = async ({ email, password, rememberMe = false }) => {
-    const matchedUser = users.find(
-      (candidate) => candidate.email.toLowerCase() === email.trim().toLowerCase() && candidate.password === password
-    )
-
-    if (!matchedUser) {
-      throw new Error('Invalid email or password.')
-    }
-
+    const response = await fetch(`${AUTH_API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const payload = await parseResponse(response)
     const authenticatedUser = {
-      email: matchedUser.email,
-      name: matchedUser.name,
-      role: matchedUser.role,
+      id: payload?.data?.id,
+      name: payload?.data?.name,
+      email: payload?.data?.email,
+      role: mapRole(payload?.data?.role),
     }
-    setUser(authenticatedUser)
+    const authenticatedSession = { user: authenticatedUser, token: payload?.data?.token }
+
+    if (!authenticatedSession.token) throw new Error('Login response did not include an authentication token.')
+
+    setSession(authenticatedSession)
 
     if (rememberMe) {
-      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authenticatedUser))
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authenticatedSession))
+      window.sessionStorage.removeItem(AUTH_SESSION_KEY)
     } else {
       window.localStorage.removeItem(AUTH_STORAGE_KEY)
+      window.sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(authenticatedSession))
     }
 
     return authenticatedUser
   }
 
-  const register = async ({ name, email, password, role = 'student', department }) => {
-    const normalizedEmail = email.trim().toLowerCase()
-    const alreadyRegistered = users.some((candidate) => candidate.email.toLowerCase() === normalizedEmail)
-
-    if (alreadyRegistered) throw new Error('An account with this email already exists.')
-
-    const normalizedRole = role.toLowerCase() === 'staff' ? 'Staff' : 'Student'
-    const newUser = {
-      email: normalizedEmail,
-      password,
-      name: name.trim(),
-      role: normalizedRole,
-      department,
-    }
-    const registeredUsers = [...users, newUser]
-    setUsers(registeredUsers)
-    window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(registeredUsers.slice(MOCK_USERS.length)))
-    return { email: newUser.email, name: newUser.name, role: newUser.role }
+  const register = async ({ name, email, password }) => {
+    const response = await fetch(`${AUTH_API_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
+    })
+    const payload = await parseResponse(response)
+    return payload?.data ?? payload
   }
 
   const logout = () => {
-    setUser(null)
+    setSession(null)
     window.localStorage.removeItem(AUTH_STORAGE_KEY)
+    window.sessionStorage.removeItem(AUTH_SESSION_KEY)
   }
 
   const value = {
-    user,
-    isAuthenticated: Boolean(user),
+    user: session?.user ?? null,
+    isAuthenticated: Boolean(session?.user),
     login,
     register,
     logout,

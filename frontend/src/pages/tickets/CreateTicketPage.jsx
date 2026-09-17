@@ -3,24 +3,46 @@ import { categories } from '../../assets/data/categories'
 import useTickets from '../../hooks/useTickets'
 import styles from './CreateTicketPage.module.css'
 
+const backendCategories = {
+	Hostel: 'HOSTEL',
+	Transport: 'TRANSPORT',
+	Fees: 'FEES',
+	It: 'IT',
+	IT: 'IT',
+	Facilities: 'FACILITIES',
+	Software: 'SOFTWARE',
+	Hardware: 'HARDWARE',
+	Network: 'NETWORK',
+	HR: 'HR',
+	Finance: 'FINANCE',
+}
+
 export default function CreateTicketPage() {
 	const { addTicket } = useTickets()
 	const [category, setCategory] = useState('Hostel')
 	const [details, setDetails] = useState('')
+	const [isSubmitting, setIsSubmitting] = useState(false)
 
-	const handleSubmit = (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault()
-		const now = new Date().toISOString().slice(0, 10)
-		addTicket({
-			title: details.trim() || 'Untitled ticket',
-			description: details.trim(),
-			category,
-			priority: 'Medium',
-			status: 'Open',
-			created: now,
-			updated: now,
-		})
-		alert(`Ticket submitted:\nCategory: ${category}\nDetails: ${details}`)
+		if (isSubmitting) return
+
+		setIsSubmitting(true)
+		try {
+			await addTicket({
+				title: details.trim() || 'Untitled ticket',
+				description: details.trim(),
+				category: backendCategories[category],
+				priority: 'MEDIUM',
+			})
+			alert(`Ticket submitted:\nCategory: ${category}\nDetails: ${details}`)
+			setDetails('')
+		} catch (error) {
+			const message = error?.response?.data?.message || error?.message || 'Unable to submit ticket.'
+			alert(`Unable to submit ticket: ${message}`)
+		} finally {
+			setIsSubmitting(false)
+		}
 	}
 
 	return (
@@ -54,7 +76,7 @@ export default function CreateTicketPage() {
 
 				<label htmlFor="attachment">Attachment (optional)</label>
 			<input type="file" id="attachment" />
-				<button className={styles.submit} type="submit">Submit ticket</button>
+				<button className={styles.submit} type="submit" disabled={isSubmitting}>Submit ticket</button>
 			</form>
 		</div>
 	)

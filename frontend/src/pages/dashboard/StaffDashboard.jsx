@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useTickets from '../../hooks/useTickets'
 import styles from './StaffDashboard.module.css'
 import {
@@ -14,38 +15,75 @@ import { Pie } from 'react-chartjs-2'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
+function getCategoryLabel(category) {
+	return String(category || 'Uncategorized')
+		.replace(/_/g, ' ')
+		.toLowerCase()
+		.replace(/\b\w/g, (character) => character.toUpperCase())
+		.replace(/\bIt\b/g, 'IT')
+}
+
 export default function StaffDashboard() {
-	const { tickets } = useTickets()
-	const assignedTickets = tickets.filter((ticket) => ticket.assignedTo)
+	const navigate = useNavigate()
+	const { tickets, updateTicket } = useTickets()
+	const [resolvingTicketId, setResolvingTicketId] = useState(null)
+	const [resolveError, setResolveError] = useState('')
+	const assignedTickets = tickets.filter((ticket) => ticket.assignedTo != null)
+	const resolvedTickets = tickets.filter((ticket) => ['Resolved', 'Closed'].includes(ticket.status))
+	const inProgressTickets = tickets.filter((ticket) => ticket.status === 'In Progress')
+	const openTickets = tickets.filter((ticket) => ticket.status === 'Open')
 	const workload = {
 		total: tickets.length,
 		assigned: assignedTickets.length,
-		pending: tickets.length - assignedTickets.length,
+		pending: tickets.filter((ticket) => ticket.assignedTo == null).length,
+		resolved: resolvedTickets.length,
+		inProgress: inProgressTickets.length,
+		open: openTickets.length,
 	}
 
 	const statusData = {
-		labels: ['Assigned', 'Pending', 'Resolved'],
+		labels: ['Open', 'In Progress', 'Resolved'],
 		datasets: [
 			{
-				data: [workload.assigned, workload.pending, workload.total - workload.assigned - workload.pending],
+				data: [workload.open, workload.inProgress, workload.resolved],
 				backgroundColor: ['#36a2eb', '#ffcd56', '#4bc0c0'],
 			},
 		],
 	}
 
-	const departmentData = {
-		labels: ['Software', 'Hardware', 'Network'],
+	const categoryCounts = tickets.reduce((counts, ticket) => {
+		const category = getCategoryLabel(ticket.category)
+		counts[category] = (counts[category] || 0) + 1
+		return counts
+	}, {})
+
+	const categoryData = {
+		labels: Object.keys(categoryCounts),
 		datasets: [
 			{
-				data: [8, 7, 9],
+				data: Object.values(categoryCounts),
 				backgroundColor: ['#ff6384', '#ff9f40', '#36a2eb'],
 			},
 		],
 	}
 
+	const resolveTicket = async (ticketId) => {
+		if (resolvingTicketId !== null) return
+
+		setResolvingTicketId(ticketId)
+		setResolveError('')
+		try {
+			await updateTicket(ticketId, { status: 'Resolved' })
+		} catch (error) {
+			setResolveError(error?.response?.data?.message || error?.message || 'Unable to resolve ticket.')
+		} finally {
+			setResolvingTicketId(null)
+		}
+	}
+
 	const visibleTickets = tickets.map((ticket) => ({
 		...ticket,
-		student: ticket.requester?.name || 'Unassigned requester',
+		student: ticket.creator?.name || ticket.requester?.name || 'Unassigned requester',
 		issue: ticket.title || ticket.subject || 'Untitled ticket',
 		workStatus: ['Resolved', 'Closed'].includes(ticket.status)
 			? 'Resolved'
@@ -80,13 +118,14 @@ export default function StaffDashboard() {
 					<Pie data={statusData} />
 				</div>
 				<div className={styles.chartBox}>
-					<h2>Department Tickets</h2>
-					<Pie data={departmentData} />
+					<h2>Ticket Categories</h2>
+					<Pie data={categoryData} />
 				</div>
 			</div>
 
 			<div className={styles.tickets}>
 				<h2>Open Tickets</h2>
+				{resolveError ? <p role="alert">{resolveError}</p> : null}
 				<table>
 					<thead>
 						<tr>
@@ -105,10 +144,14 @@ export default function StaffDashboard() {
 								<td>{t.issue}</td>
 								<td>{t.workStatus}</td>
 								<td className={styles.actions}>
-									<button className={styles.update} onClick={() => alert('Update ticket')}>
+									<button className={styles.update} onClick={() => navigate(`/tickets/${t.id}`)}>
 										Update
 									</button>
-									<button className={styles.resolve} onClick={() => alert('Resolve ticket')}>
+									<button
+										className={styles.resolve}
+										onClick={() => resolveTicket(t.id)}
+										disabled={resolvingTicketId === t.id}
+									>
 										Resolve
 									</button>
 								</td>

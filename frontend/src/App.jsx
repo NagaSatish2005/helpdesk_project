@@ -10,15 +10,15 @@ export default function App() {
   return (
     <ThemeProvider>
       <NotificationProvider>
-        <TicketProvider>
-          <UserProvider>
-            <AuthProvider>
+        <AuthProvider>
+          <TicketProvider>
+            <UserProvider>
               <BrowserRouter>
                 <AppRoutes />
               </BrowserRouter>
-            </AuthProvider>
-          </UserProvider>
-        </TicketProvider>
+            </UserProvider>
+          </TicketProvider>
+        </AuthProvider>
       </NotificationProvider>
     </ThemeProvider>
   );

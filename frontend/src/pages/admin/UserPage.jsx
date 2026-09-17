@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Alert from '../../components/common/UI/Alert'
 import Button from '../../components/common/UI/Button'
 import Card from '../../components/common/UI/Card'
@@ -8,6 +8,7 @@ import Pagination from '../../components/common/UI/Pagination'
 import Select from '../../components/common/UI/Select'
 import Table from '../../components/common/UI/Table'
 import useUsers from '../../hooks/useUsers'
+import api from '../../services/api'
 import styles from './UserPage.module.css'
 
 const roles = ['All', 'Student', 'Staff', 'Admin'].map((role) => ({ value: role, label: role }))
@@ -15,15 +16,29 @@ const statuses = ['All', 'Active', 'Inactive'].map((status) => ({ value: status,
 
 export default function UserPage() {
   const { users: sourceUsers, updateUser, deleteUser } = useUsers()
+  const [backendUsers, setBackendUsers] = useState([])
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [page, setPage] = useState(1)
   const [modal, setModal] = useState(null)
   const [feedback, setFeedback] = useState(null)
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '' })
+  const [createError, setCreateError] = useState('')
+  const [creatingUser, setCreatingUser] = useState(false)
+  const [deletingUser, setDeletingUser] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const pageSize = 5
-  const users = sourceUsers.filter((user) => String(user.id || '').startsWith('U-'))
+  useEffect(() => {
+    setBackendUsers(sourceUsers)
+  }, [sourceUsers])
+
+  // TODO: Replace the temporary Active placeholder when the backend provides user status.
+  const users = useMemo(() => backendUsers.map((user) => ({
+    ...user,
+    status: 'Active',
+  })), [backendUsers])
 
   const filteredUsers = useMemo(() => {
     return users
@@ -35,10 +50,10 @@ export default function UserPage() {
         return (
           user.name.toLowerCase().includes(lc) ||
           user.email.toLowerCase().includes(lc) ||
-          user.id.toLowerCase().includes(lc)
+          String(user.id).toLowerCase().includes(lc)
         )
       })
-      .sort((a, b) => (a.name > b.name ? 1 : -1))
+      .sort((a, b) => Number(a.id) - Number(b.id))
   }, [users, search, roleFilter, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
@@ -53,8 +68,44 @@ export default function UserPage() {
     setFeedback({ title, message, type })
   }
 
+  const closeModal = useCallback(() => {
+    setModal(null)
+  }, [])
+
   const handleAddNew = () => {
-    setModal({ type: 'info', title: 'Add new user', message: 'User creation is still a local demo.' })
+    setCreateForm({ name: '', email: '', password: '' })
+    setCreateError('')
+    setModal({ type: 'create', title: 'Add new staff user' })
+  }
+
+  const handleCreateUser = async (event) => {
+    event.preventDefault()
+    if (creatingUser) return
+
+    const name = createForm.name.trim()
+    const email = createForm.email.trim()
+    if (!name || !email || !createForm.password) {
+      setCreateError('Name, email, and password are required.')
+      return
+    }
+
+    setCreatingUser(true)
+    setCreateError('')
+    try {
+      await api.post('/api/users/staff', {
+        name,
+        email,
+        password: createForm.password,
+      })
+      const response = await api.get('/api/users')
+      setBackendUsers(Array.isArray(response.data?.data) ? response.data.data : [])
+      setModal(null)
+      showFeedback('User created', 'User created successfully.', 'success')
+    } catch (error) {
+      setCreateError(error?.response?.data?.message || error?.message || 'Unable to create user.')
+    } finally {
+      setCreatingUser(false)
+    }
   }
 
   const handleEdit = (id) => {
@@ -68,7 +119,24 @@ export default function UserPage() {
   }
 
   const handleDelete = (id) => {
+    setDeleteError('')
     setModal({ type: 'delete', title: 'Delete user', userId: id })
+  }
+
+  const confirmDelete = async () => {
+  if (deletingUser) return
+
+  setDeletingUser(true)
+  setDeleteError('')
+  try {
+    await deleteUser(modal.userId)
+    setModal(null)
+    showFeedback('User deleted', 'User deleted successfully.', 'success')
+  } catch (error) {
+    setDeleteError(error?.message || 'Unable to delete user.')
+  } finally {
+    setDeletingUser(false)
+  }
   }
 
   const handleViewDetails = (user) => {
@@ -174,20 +242,48 @@ export default function UserPage() {
 
       <Modal
         isOpen={Boolean(modal)}
-        onClose={() => setModal(null)}
+        onClose={closeModal}
         title={modal?.title}
         footer={modal?.type === 'delete' ? (
           <div className={styles.modalActions}>
-            <Button variant="secondary" onClick={() => setModal(null)}>Cancel</Button>
-            <Button variant="danger" onClick={() => {
-              deleteUser(modal.userId)
-              showFeedback('User deleted', `User ${modal.userId} deleted (demo).`, 'success')
-              setModal(null)
-            }}>Delete</Button>
+            <Button variant="secondary" onClick={() => setModal(null)} disabled={deletingUser}>Cancel</Button>
+            <Button variant="danger" onClick={confirmDelete} loading={deletingUser}>Delete</Button>
+          </div>
+        ) : modal?.type === 'create' ? (
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={() => setModal(null)} disabled={creatingUser}>Cancel</Button>
+            <Button type="submit" form="create-user-form" loading={creatingUser}>Create user</Button>
           </div>
         ) : null}
       >
-        {modal?.type === 'details' ? (
+        {modal?.type === 'create' ? (
+          <form id="create-user-form" onSubmit={handleCreateUser}>
+            {createError ? <Alert type="error">{createError}</Alert> : null}
+            <Input
+              label="Name"
+              value={createForm.name}
+              onChange={(event) => setCreateForm((current) => ({ ...current, name: event.target.value }))}
+              required
+              disabled={creatingUser}
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={createForm.email}
+              onChange={(event) => setCreateForm((current) => ({ ...current, email: event.target.value }))}
+              required
+              disabled={creatingUser}
+            />
+            <Input
+              label="Password"
+              type="password"
+              value={createForm.password}
+              onChange={(event) => setCreateForm((current) => ({ ...current, password: event.target.value }))}
+              required
+              disabled={creatingUser}
+            />
+          </form>
+        ) : modal?.type === 'details' ? (
           <dl className={styles.details}>
             <dt>ID</dt><dd>{modal.user.id}</dd>
             <dt>Name</dt><dd>{modal.user.name}</dd>
@@ -197,7 +293,10 @@ export default function UserPage() {
             <dt>Created</dt><dd>{modal.user.created}</dd>
           </dl>
         ) : modal?.type === 'delete' ? (
-          <p>Delete user {modal.userId}? This cannot be undone.</p>
+          <>
+            {deleteError ? <Alert type="error">{deleteError}</Alert> : null}
+            <p>Delete user {modal.userId}? This cannot be undone.</p>
+          </>
         ) : modal ? (
           <p>{modal.message}</p>
         ) : null}

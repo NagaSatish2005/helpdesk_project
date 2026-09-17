@@ -3,8 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import useTickets from '../../hooks/useTickets'
 import styles from './MyTicketPage.module.css'
 
-const statusOptions = ['All', 'Open', 'In Progress', 'Closed']
+const statusOptions = ['All', 'Open', 'In Progress', 'Resolved', 'Closed']
 const priorityOptions = ['All', 'High', 'Medium', 'Low']
+
+const priorityLabels = {
+  HIGH: 'High',
+  MEDIUM: 'Medium',
+  LOW: 'Low',
+}
 
 export default function MyTicketPage() {
   const navigate = useNavigate()
@@ -16,11 +22,12 @@ export default function MyTicketPage() {
   const pageSize = 5
 
   const tickets = useMemo(() => sourceTickets
-    .filter((ticket) => String(ticket.id || '').startsWith('T-'))
     .map((ticket) => ({
       ...ticket,
       title: ticket.title || ticket.subject || 'Untitled ticket',
-      updated: ticket.updated || ticket.created || '',
+      priority: priorityLabels[ticket.priority] || ticket.priority,
+      created: ticket.createdAt || ticket.created || '',
+      updated: ticket.updatedAt || ticket.updated || ticket.createdAt || ticket.created || '',
     })), [sourceTickets])
 
   const filtered = useMemo(() => {
@@ -31,7 +38,7 @@ export default function MyTicketPage() {
         if (!search) return true
         return (
           ticket.title.toLowerCase().includes(search.toLowerCase()) ||
-          ticket.id.toLowerCase().includes(search.toLowerCase())
+          String(ticket.id).toLowerCase().includes(search.toLowerCase())
         )
       })
       .sort((a, b) => (a.updated < b.updated ? 1 : -1))

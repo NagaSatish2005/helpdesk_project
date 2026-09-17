@@ -27,11 +27,11 @@ export default function StudentDashboard() {
 	const { tickets } = useTickets()
 	const studentName = user?.name || user?.fullName || 'Student'
 	const studentTickets = useMemo(() => tickets
-		.filter((ticket) => String(ticket.id || '').startsWith('TCK-'))
 		.map((ticket) => ({
 			...ticket,
 			title: ticket.title || ticket.subject || 'Untitled ticket',
-			created: ticket.created || ticket.updated || '',
+			created: ticket.createdAt || ticket.created || '',
+			updated: ticket.updatedAt || ticket.updated || ticket.createdAt || ticket.created || '',
 		})), [tickets])
 
 	const stats = {
