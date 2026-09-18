@@ -12,10 +12,17 @@ import api from '../../services/api'
 import styles from './UserPage.module.css'
 
 const roles = ['All', 'Student', 'Staff', 'Admin'].map((role) => ({ value: role, label: role }))
+const editRoles = ['Student', 'Staff', 'Admin'].map((role) => ({ value: role, label: role }))
 const statuses = ['All', 'Active', 'Inactive'].map((status) => ({ value: status, label: status }))
+const roleToBackendValue = { Student: 'STUDENT', Staff: 'STAFF', Admin: 'ADMIN' }
+
+const roleToLabel = (role) => {
+  const normalizedRole = String(role || '').toUpperCase()
+  return normalizedRole.charAt(0) + normalizedRole.slice(1).toLowerCase()
+}
 
 export default function UserPage() {
-  const { users: sourceUsers, updateUser, deleteUser } = useUsers()
+  const { users: sourceUsers, deleteUser } = useUsers()
   const [backendUsers, setBackendUsers] = useState([])
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('All')
@@ -26,6 +33,10 @@ export default function UserPage() {
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '' })
   const [createError, setCreateError] = useState('')
   const [creatingUser, setCreatingUser] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', email: '', role: 'Staff' })
+  const [editError, setEditError] = useState('')
+  const [updatingUser, setUpdatingUser] = useState(false)
+  const [statusUpdatingUserId, setStatusUpdatingUserId] = useState(null)
   const [deletingUser, setDeletingUser] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
@@ -34,10 +45,9 @@ export default function UserPage() {
     setBackendUsers(sourceUsers)
   }, [sourceUsers])
 
-  // TODO: Replace the temporary Active placeholder when the backend provides user status.
   const users = useMemo(() => backendUsers.map((user) => ({
     ...user,
-    status: 'Active',
+    status: user.active ? 'Active' : 'Inactive',
   })), [backendUsers])
 
   const filteredUsers = useMemo(() => {
@@ -108,14 +118,74 @@ export default function UserPage() {
     }
   }
 
-  const handleEdit = (id) => {
-    setModal({ type: 'info', title: 'Edit user', message: `Editing ${id} is still a local demo.` })
+  const handleEdit = (user) => {
+    setEditForm({
+      name: user.name || '',
+      email: user.email || '',
+      role: roleToLabel(user.role),
+    })
+    setEditError('')
+    setModal({ type: 'edit', title: 'Edit user', userId: user.id })
   }
 
-  const handleToggleStatus = (id, currentStatus) => {
-    const nextStatus = currentStatus === 'Active' ? 'Inactive' : 'Active'
-    updateUser(id, { status: nextStatus })
-    setModal({ type: 'info', title: `${nextStatus} user`, message: `Changing ${id} to ${nextStatus} is still a local demo.` })
+  const handleUpdateUser = async (event) => {
+    event.preventDefault()
+    if (updatingUser) return
+
+    const name = editForm.name.trim()
+    const email = editForm.email.trim()
+    if (!name || !email || !roleToBackendValue[editForm.role]) {
+      setEditError('Name, email, and role are required.')
+      return
+    }
+
+    setUpdatingUser(true)
+    setEditError('')
+    try {
+      await api.patch(`/api/users/${modal.userId}`, {
+        name,
+        email,
+        role: roleToBackendValue[editForm.role],
+      })
+      const response = await api.get('/api/users')
+      const refreshedUsers = Array.isArray(response.data?.data) ? response.data.data : []
+      setBackendUsers(refreshedUsers.map((user) => ({ ...user, role: roleToLabel(user.role) })))
+      setModal(null)
+      showFeedback('User updated', 'User updated successfully.', 'success')
+    } catch (error) {
+      setEditError(error?.response?.data?.message || error?.message || 'Unable to update user.')
+    } finally {
+      setUpdatingUser(false)
+    }
+  }
+
+  const handleToggleStatus = async (user) => {
+    if (statusUpdatingUserId === user.id) return
+
+    const nextActive = !user.active
+    setStatusUpdatingUserId(user.id)
+    try {
+      await api.patch(`/api/users/${user.id}/status`, { active: nextActive })
+      const response = await api.get('/api/users')
+      const refreshedUsers = Array.isArray(response.data?.data) ? response.data.data : []
+      setBackendUsers(refreshedUsers.map((refreshedUser) => ({
+        ...refreshedUser,
+        role: roleToLabel(refreshedUser.role),
+      })))
+      showFeedback(
+        nextActive ? 'User activated' : 'User deactivated',
+        nextActive ? 'User activated successfully.' : 'User deactivated successfully.',
+        'success'
+      )
+    } catch (error) {
+      showFeedback(
+        'Unable to update user status',
+        error?.response?.data?.message || error?.message || 'Unable to update user status.',
+        'error'
+      )
+    } finally {
+      setStatusUpdatingUserId(null)
+    }
   }
 
   const handleDelete = (id) => {
@@ -164,8 +234,13 @@ export default function UserPage() {
       render: (user) => (
         <div className={styles.actions}>
           <Button size="small" variant="secondary" onClick={() => handleViewDetails(user)}>View</Button>
-          <Button size="small" variant="secondary" onClick={() => handleEdit(user.id)}>Edit</Button>
-          <Button size="small" variant="secondary" onClick={() => handleToggleStatus(user.id, user.status)}>
+          <Button size="small" variant="secondary" onClick={() => handleEdit(user)}>Edit</Button>
+          <Button
+            size="small"
+            variant="secondary"
+            onClick={() => handleToggleStatus(user)}
+            loading={statusUpdatingUserId === user.id}
+          >
             {user.status === 'Active' ? 'Deactivate' : 'Activate'}
           </Button>
           <Button size="small" variant="danger" onClick={() => handleDelete(user.id)}>Delete</Button>
@@ -254,6 +329,11 @@ export default function UserPage() {
             <Button variant="secondary" onClick={() => setModal(null)} disabled={creatingUser}>Cancel</Button>
             <Button type="submit" form="create-user-form" loading={creatingUser}>Create user</Button>
           </div>
+        ) : modal?.type === 'edit' ? (
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={() => setModal(null)} disabled={updatingUser}>Cancel</Button>
+            <Button type="submit" form="edit-user-form" loading={updatingUser}>Save changes</Button>
+          </div>
         ) : null}
       >
         {modal?.type === 'create' ? (
@@ -281,6 +361,33 @@ export default function UserPage() {
               onChange={(event) => setCreateForm((current) => ({ ...current, password: event.target.value }))}
               required
               disabled={creatingUser}
+            />
+          </form>
+        ) : modal?.type === 'edit' ? (
+          <form id="edit-user-form" onSubmit={handleUpdateUser}>
+            {editError ? <Alert type="error">{editError}</Alert> : null}
+            <Input
+              label="Name"
+              value={editForm.name}
+              onChange={(event) => setEditForm((current) => ({ ...current, name: event.target.value }))}
+              required
+              disabled={updatingUser}
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={editForm.email}
+              onChange={(event) => setEditForm((current) => ({ ...current, email: event.target.value }))}
+              required
+              disabled={updatingUser}
+            />
+            <Select
+              label="Role"
+              value={editForm.role}
+              options={editRoles}
+              onChange={(event) => setEditForm((current) => ({ ...current, role: event.target.value }))}
+              required
+              disabled={updatingUser}
             />
           </form>
         ) : modal?.type === 'details' ? (

@@ -58,6 +58,10 @@ public class AuthService {
         }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        if (!userDetails.isEnabled()) {
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
         String token = jwtService.generateToken(userDetails);
 
         return new AuthResponse(

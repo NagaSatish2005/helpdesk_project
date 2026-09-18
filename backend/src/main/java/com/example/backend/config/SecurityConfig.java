@@ -1,10 +1,10 @@
 package com.example.backend.config;
 
-import com.example.backend.security.JwtAuthenticationFilter;
-import com.example.backend.security.UserDetailsServiceImpl;
-import org.springframework.http.HttpMethod;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
@@ -20,7 +20,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
+import com.example.backend.security.JwtAuthenticationFilter;
+import com.example.backend.security.UserDetailsServiceImpl;
 
 @Configuration
 @EnableWebSecurity
@@ -80,6 +81,36 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/tickets")
+                        .hasAnyRole("STUDENT", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/tickets/*")
+                        .hasAnyRole("STUDENT", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/tickets")
+                        .hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/tickets/user/*")
+                        .hasAnyRole("STUDENT", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/tickets/*")
+                        .hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/comments")
+                        .hasAnyRole("STUDENT", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/comments/*")
+                        .hasAnyRole("STUDENT", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/comments/ticket/*")
+                        .hasAnyRole("STUDENT", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/dashboard/summary")
+                        .hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/users")
+                        .hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/users/*")
+                        .hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/users/staff")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/*/status")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/*")
+                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/*")
+                        .hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

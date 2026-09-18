@@ -12,8 +12,20 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const storedSession = window.localStorage.getItem(AUTH_STORAGE_KEY) || window.sessionStorage.getItem(AUTH_SESSION_KEY)
-  const token = storedSession ? JSON.parse(storedSession).token : null
+  const parseSession = (storedSession) => {
+    if (!storedSession) return null
+
+    try {
+      const session = JSON.parse(storedSession)
+      return session?.token ? session : null
+    } catch {
+      return null
+    }
+  }
+
+  const session = parseSession(window.localStorage.getItem(AUTH_STORAGE_KEY))
+    || parseSession(window.sessionStorage.getItem(AUTH_SESSION_KEY))
+  const token = session?.token || null
 
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config

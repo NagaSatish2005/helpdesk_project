@@ -30,6 +30,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .authorities(List.of(
                         new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
                 ))
+                .disabled(!user.isActive())
                 .build();
     }
 }
