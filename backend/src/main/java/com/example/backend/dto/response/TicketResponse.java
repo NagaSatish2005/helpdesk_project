@@ -17,6 +17,7 @@ public class TicketResponse {
 
     private UserResponse creator;
     private UserResponse assignedTo;
+    private DepartmentSummaryResponse assignedDepartment;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -86,6 +87,14 @@ public class TicketResponse {
 
     public void setAssignedTo(UserResponse assignedTo) {
         this.assignedTo = assignedTo;
+    }
+
+    public DepartmentSummaryResponse getAssignedDepartment() {
+        return assignedDepartment;
+    }
+
+    public void setAssignedDepartment(DepartmentSummaryResponse assignedDepartment) {
+        this.assignedDepartment = assignedDepartment;
     }
 
     public LocalDateTime getCreatedAt() {

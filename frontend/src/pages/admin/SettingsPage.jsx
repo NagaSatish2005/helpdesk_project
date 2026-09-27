@@ -5,6 +5,8 @@ import Card from '../../components/common/UI/Card'
 import Input from '../../components/common/UI/Input'
 import Modal from '../../components/common/UI/Modal'
 import Select from '../../components/common/UI/Select'
+import useAuth from '../../hooks/useAuth'
+import api from '../../services/api'
 import styles from './SettingsPage.module.css'
 
 const TAB_KEYS = {
@@ -28,10 +30,9 @@ const fontSizeOptions = ['small', 'medium', 'large'].map((value) => ({ value, la
 const priorityOptions = ['Low', 'Medium', 'High'].map((value) => ({ value, label: value }))
 
 export default function SettingsPage() {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
-
-  // Demo-only flags / state. In a real app this would come from auth context.
-  const [isAdmin, setIsAdmin] = useState(false)
+  const isAdmin = user?.role === 'Admin'
 
   const [profile, setProfile] = useState(DEFAULT_PROFILE)
 
@@ -113,14 +114,32 @@ export default function SettingsPage() {
 
     setSavingSection(section)
     setFeedback(null)
+
+    if (section === 'security') {
+      try {
+        await api.patch('/api/users/me/password', {
+          currentPassword: security.currentPassword,
+          newPassword: security.newPassword,
+          confirmPassword: security.confirmPassword,
+        })
+        setSecurity(DEFAULT_SECURITY)
+        setSavedSettings((current) => ({ ...current, security: DEFAULT_SECURITY }))
+        setFeedback({ type: 'success', title: 'Password updated', message: 'Password updated successfully.' })
+      } catch (error) {
+        setFeedback({
+          type: 'error',
+          title: 'Unable to update password',
+          message: error?.response?.data?.message || error?.message || 'Unable to update password.',
+        })
+      } finally {
+        setSavingSection(null)
+      }
+      return
+    }
+
     await Promise.resolve()
     const values = { profile, notifications, appearance, ticket: ticketConfig, admin: systemSettings }
-    if (section === 'security') {
-      setSavedSettings((current) => ({ ...current, security: DEFAULT_SECURITY }))
-      setSecurity(DEFAULT_SECURITY)
-    } else {
-      setSavedSettings((current) => ({ ...current, [section]: values[section] }))
-    }
+    setSavedSettings((current) => ({ ...current, [section]: values[section] }))
     setSavingSection(null)
     setFeedback({ type: 'success', title: 'Settings saved', message: `${TAB_KEYS[section]} settings were updated locally.` })
   }
@@ -147,20 +166,9 @@ export default function SettingsPage() {
         <div>
           <h1>Settings</h1>
           <p>
-            Manage your helpdesk preferences. Admin features are available when the
-            "Admin" toggle is enabled.
+            Manage your helpdesk preferences.
           </p>
         </div>
-        <Input
-          type="checkbox"
-          label="Admin mode"
-          fullWidth={false}
-          checked={isAdmin}
-          onChange={(e) => {
-            setIsAdmin(e.target.checked)
-            if (!e.target.checked && activeTab === 'admin') setActiveTab('profile')
-          }}
-        />
       </header>
 
       {feedback ? (

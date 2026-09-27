@@ -71,7 +71,10 @@ export default function UserPage() {
 
   const pagedUsers = useMemo(() => {
     const start = (safePage - 1) * pageSize
-    return filteredUsers.slice(start, start + pageSize)
+    return filteredUsers.slice(start, start + pageSize).map((user, rowIndex) => ({
+      ...user,
+      rowIndex,
+    }))
   }, [filteredUsers, safePage])
 
   const showFeedback = (title, message, type = 'info') => {
@@ -214,10 +217,19 @@ export default function UserPage() {
   }
 
   const columns = [
-    { key: 'id', header: 'ID', render: (user) => <span className={styles.userId}>{user.id}</span> },
+    {
+      key: 'id',
+      header: 'ID',
+      render: (user) => <span className={styles.userId}>{(safePage - 1) * pageSize + user.rowIndex + 1}</span>,
+    },
     { key: 'name', header: 'Name' },
     { key: 'email', header: 'Email' },
     { key: 'role', header: 'Role' },
+    {
+      key: 'departmentName',
+      header: 'Department',
+      render: (user) => user.departmentName || 'Unassigned',
+    },
     {
       key: 'status',
       header: 'Status',
@@ -396,6 +408,7 @@ export default function UserPage() {
             <dt>Name</dt><dd>{modal.user.name}</dd>
             <dt>Email</dt><dd>{modal.user.email}</dd>
             <dt>Role</dt><dd>{modal.user.role}</dd>
+            <dt>Department</dt><dd>{modal.user.departmentName || 'Unassigned'}</dd>
             <dt>Status</dt><dd>{modal.user.status}</dd>
             <dt>Created</dt><dd>{modal.user.created}</dd>
           </dl>

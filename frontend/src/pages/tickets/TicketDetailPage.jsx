@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { categories } from '../../assets/data/categories'
 import useAuth from '../../hooks/useAuth'
 import useTickets from '../../hooks/useTickets'
+import { useUserContext } from '../../context/UserContext'
 import api from '../../services/api'
 import styles from './TicketDetailPage.module.css'
 import html2canvas from 'html2canvas'
@@ -53,12 +54,30 @@ function mapComment(comment) {
   }
 }
 
+function formatFileSize(size) {
+  if (!Number.isFinite(Number(size))) return 'Unknown size'
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function mapAttachment(attachment) {
+  return {
+    id: attachment.id,
+    name: attachment.fileName,
+    size: formatFileSize(attachment.fileSize),
+    contentType: attachment.contentType,
+  }
+}
+
 export default function TicketDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { tickets, updateTicket } = useTickets()
+  const { users, loading: usersLoading, error: usersError } = useUserContext()
   const canManageTicket = ['STAFF', 'ADMIN'].includes(String(user?.role || '').toUpperCase())
+  const isAdmin = String(user?.role || '').toUpperCase() === 'ADMIN'
   const contextTicket = useMemo(() => tickets.find((candidate) => String(candidate.id) === String(id)) || null, [tickets, id])
   const [fetchedTicket, setFetchedTicket] = useState(null)
   const [ticketLoading, setTicketLoading] = useState(false)
@@ -79,6 +98,13 @@ export default function TicketDetailPage() {
   const [editError, setEditError] = useState('')
   const [pdfGenerating, setPdfGenerating] = useState(false)
   const [pdfError, setPdfError] = useState('')
+  const [attachments, setAttachments] = useState([])
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false)
+  const [attachmentsError, setAttachmentsError] = useState('')
+  const [attachmentMessage, setAttachmentMessage] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState(null)
+  const attachmentInputRef = useRef(null)
   const ticketDetailsRef = useRef(null)
 
   useEffect(() => {
@@ -132,29 +158,45 @@ export default function TicketDetailPage() {
   }, [ticket])
 
   useEffect(() => {
-    if (!canManageTicket) return undefined
+    if (!canManageTicket || !ticket) {
+      setAttachments([])
+      setAttachmentsLoading(false)
+      setAttachmentsError('')
+      setAttachmentMessage('')
+      return undefined
+    }
 
     let isMounted = true
-    setStaffLoading(true)
-    setStaffError('')
+    setAttachmentsLoading(true)
+    setAttachmentsError('')
 
-    api.get('/api/users')
+    api.get(`/api/tickets/${ticket.id}/attachments`)
       .then((response) => {
-        if (!isMounted) return
-        const users = Array.isArray(response.data?.data) ? response.data.data : []
-        setStaffUsers(users.filter((staffUser) => String(staffUser.role || '').toUpperCase() === 'STAFF'))
+        if (isMounted) {
+          const data = Array.isArray(response.data?.data) ? response.data.data : []
+          setAttachments(data.map(mapAttachment))
+        }
       })
       .catch((error) => {
-        if (isMounted) setStaffError(getErrorMessage(error, 'Unable to load staff users.'))
+        if (isMounted) setAttachmentsError(getErrorMessage(error, 'Unable to load attachments.'))
       })
       .finally(() => {
-        if (isMounted) setStaffLoading(false)
+        if (isMounted) setAttachmentsLoading(false)
       })
 
     return () => {
       isMounted = false
     }
-  }, [canManageTicket])
+  }, [canManageTicket, ticket])
+
+  useEffect(() => {
+    const staff = isAdmin
+      ? users.filter((candidate) => String(candidate.role || '').toUpperCase() === 'STAFF')
+      : []
+    setStaffUsers(staff)
+    setStaffLoading(isAdmin && usersLoading)
+    setStaffError(isAdmin ? usersError || '' : '')
+  }, [isAdmin, users, usersLoading, usersError])
 
   useEffect(() => {
     if (!ticket) {
@@ -246,7 +288,7 @@ export default function TicketDetailPage() {
     if (editForm.status !== currentValues.status) updates.status = editForm.status
     if (editForm.priority !== currentValues.priority) updates.priority = editForm.priority
     if (editForm.category !== currentValues.category) updates.category = editForm.category
-    if (editForm.assignedToId !== currentValues.assignedToId) {
+    if (isAdmin && editForm.assignedToId !== currentValues.assignedToId) {
       updates.assignedToId = editForm.assignedToId ? Number(editForm.assignedToId) : null
     }
 
@@ -261,6 +303,72 @@ export default function TicketDetailPage() {
       setEditError(getErrorMessage(error, 'Unable to update ticket.'))
     } finally {
       setEditSaving(false)
+    }
+  }
+
+  const handleAttachmentSelected = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    setAttachmentMessage('')
+    setAttachmentsError('')
+
+    if (!file) {
+      setAttachmentsError('Please select a file to upload.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setAttachmentsError('Attachment must not exceed 10 MB.')
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('file', file)
+    setUploading(true)
+    try {
+      await api.post(`/api/tickets/${ticket.id}/attachments`, formData)
+      const response = await api.get(`/api/tickets/${ticket.id}/attachments`)
+      const data = Array.isArray(response.data?.data) ? response.data.data : []
+      setAttachments(data.map(mapAttachment))
+      setAttachmentMessage('Attachment uploaded successfully.')
+    } catch (error) {
+      setAttachmentsError(getErrorMessage(error, 'Unable to upload attachment.'))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const downloadAttachment = async (attachment) => {
+    setAttachmentMessage('')
+    setAttachmentsError('')
+    try {
+      const response = await api.get(`/api/attachments/${attachment.id}/download`, { responseType: 'blob' })
+      const url = URL.createObjectURL(response.data)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = attachment.name
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      setAttachmentsError(getErrorMessage(error, 'Unable to download attachment.'))
+    }
+  }
+
+  const deleteAttachment = async (attachment) => {
+    if (!window.confirm(`Delete attachment "${attachment.name}"?`)) return
+
+    setAttachmentMessage('')
+    setAttachmentsError('')
+    setDeletingAttachmentId(attachment.id)
+    try {
+      await api.delete(`/api/attachments/${attachment.id}`)
+      setAttachments((current) => current.filter((item) => item.id !== attachment.id))
+      setAttachmentMessage('Attachment deleted successfully.')
+    } catch (error) {
+      setAttachmentsError(getErrorMessage(error, 'Unable to delete attachment.'))
+    } finally {
+      setDeletingAttachmentId(null)
     }
   }
 
@@ -413,22 +521,24 @@ export default function TicketDetailPage() {
                   ))}
                 </select>
               </div>
-              <div className={styles.field}>
-                <span className={styles.fieldLabel}>Assigned staff</span>
-                <select
-                  value={editForm.assignedToId}
-                  onChange={(e) => setEditForm((current) => ({ ...current, assignedToId: e.target.value }))}
-                  disabled={editSaving || staffLoading}
-                >
-                  <option value="">Unassigned</option>
-                  {staffUsers.map((staffUser) => (
-                    <option key={staffUser.id} value={staffUser.id}>
-                      {staffUser.name || staffUser.email}
-                    </option>
-                  ))}
-                </select>
-                {staffError ? <p role="alert">{staffError}</p> : null}
-              </div>
+              {isAdmin ? (
+                <div className={styles.field}>
+                  <span className={styles.fieldLabel}>Assigned Staff</span>
+                  <select
+                    value={editForm.assignedToId}
+                    onChange={(e) => setEditForm((current) => ({ ...current, assignedToId: e.target.value }))}
+                    disabled={editSaving || staffLoading}
+                  >
+                    <option value="">Unassigned</option>
+                    {staffUsers.map((staffUser) => (
+                      <option key={staffUser.id} value={staffUser.id}>
+                        {staffUser.name || staffUser.email}
+                      </option>
+                    ))}
+                  </select>
+                  {staffError ? <p role="alert">{staffError}</p> : null}
+                </div>
+              ) : null}
               {editError ? <p role="alert">{editError}</p> : null}
               <div className={styles.actionRow}>
                 <button className={styles.primary} onClick={saveEdit} disabled={editSaving}>
@@ -524,27 +634,50 @@ export default function TicketDetailPage() {
           </div>
         </div>
 
-        <div className={styles.card}>
-          <h2>Attachments</h2>
-          {ticket.attachments.length === 0 ? (
-            <p className={styles.empty}>No attachments uploaded.</p>
-          ) : (
-            <ul className={styles.attachments}>
-              {ticket.attachments.map((file) => (
-                <li key={file.id} className={styles.attachmentItem}>
-                  <span>{file.name}</span>
-                  <span className={styles.attachmentSize}>{file.size}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-          <button
-            className={styles.secondary}
-            onClick={() => alert('Upload functionality not implemented (demo).')}
-          >
-            Upload attachment
-          </button>
-        </div>
+        {canManageTicket ? (
+          <div className={styles.card}>
+            <h2>Attachments</h2>
+            {attachmentsLoading ? (
+              <p className={styles.empty}>Loading attachments...</p>
+            ) : attachmentsError ? (
+              <p className={styles.empty}>{attachmentsError}</p>
+            ) : attachments.length === 0 ? (
+              <p className={styles.empty}>No attachments uploaded.</p>
+            ) : (
+              <ul className={styles.attachments}>
+                {attachments.map((file) => (
+                  <li key={file.id} className={styles.attachmentItem}>
+                    <button className={styles.secondary} onClick={() => downloadAttachment(file)}>
+                      {file.name}
+                    </button>
+                    <span className={styles.attachmentSize}>{file.size}</span>
+                    <button
+                      className={styles.secondary}
+                      onClick={() => deleteAttachment(file)}
+                      disabled={deletingAttachmentId === file.id}
+                    >
+                      {deletingAttachmentId === file.id ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {attachmentMessage ? <p role="status">{attachmentMessage}</p> : null}
+            <input
+              ref={attachmentInputRef}
+              type="file"
+              onChange={handleAttachmentSelected}
+              style={{ display: 'none' }}
+            />
+            <button
+              className={styles.secondary}
+              onClick={() => attachmentInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading...' : 'Upload attachment'}
+            </button>
+          </div>
+        ) : null}
       </section>
 
       <section className={styles.card}>

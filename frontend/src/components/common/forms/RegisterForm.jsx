@@ -2,23 +2,10 @@ import React, { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import Input from '../UI/Input'
-import Select from '../UI/Select'
 import Button from '../UI/Button'
 import Alert from '../UI/Alert'
 
 import styles from './RegisterForm.module.css'
-
-const ROLE_OPTIONS = [
-  { value: 'student', label: 'Student' },
-  { value: 'staff', label: 'Staff' },
-]
-
-// Local placeholder departments; replaceable by backend data later
-const DEPARTMENT_OPTIONS = [
-  { value: 'it', label: 'IT' },
-  { value: 'hr', label: 'Human Resources' },
-  { value: 'facilities', label: 'Facilities' },
-]
 
 export default function RegisterForm({ onSubmit, loading = false, error, className = '' }) {
   const idBase = useId()
@@ -26,16 +13,12 @@ export default function RegisterForm({ onSubmit, loading = false, error, classNa
   const emailId = `${idBase}-email`
   const passwordId = `${idBase}-password`
   const confirmId = `${idBase}-confirm`
-  const roleId = `${idBase}-role`
-  const deptId = `${idBase}-dept`
 
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student',
-    department: '',
   })
 
   const [validation, setValidation] = useState({})
@@ -55,9 +38,6 @@ export default function RegisterForm({ onSubmit, loading = false, error, classNa
     if (!form.confirmPassword) errs.confirmPassword = 'Please confirm your password.'
     else if (form.confirmPassword !== form.password) errs.confirmPassword = 'Passwords do not match.'
 
-    if (!form.role) errs.role = 'Please select a role.'
-    if (!form.department) errs.department = 'Please select a department.'
-
     setValidation(errs)
     return Object.keys(errs).length === 0
   }
@@ -73,9 +53,11 @@ export default function RegisterForm({ onSubmit, loading = false, error, classNa
     const ok = validate()
     if (!ok) return
 
-    const submitData = { ...form }
-    delete submitData.confirmPassword
-    if (onSubmit) onSubmit(submitData)
+    if (onSubmit) onSubmit({
+      name: form.name,
+      email: form.email,
+      password: form.password,
+    })
   }
 
   return (
@@ -133,29 +115,6 @@ export default function RegisterForm({ onSubmit, loading = false, error, classNa
         error={validation.confirmPassword}
         required
         autoComplete="new-password"
-      />
-
-      <Select
-        id={roleId}
-        name="role"
-        label="Role"
-        value={form.role}
-        onChange={handleChange}
-        options={ROLE_OPTIONS}
-        error={validation.role}
-        required
-      />
-
-      <Select
-        id={deptId}
-        name="department"
-        label="Department"
-        value={form.department}
-        onChange={handleChange}
-        options={DEPARTMENT_OPTIONS}
-        placeholder="Select a department"
-        error={validation.department}
-        required
       />
 
       <div className={styles.actions}>

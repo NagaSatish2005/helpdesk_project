@@ -20,6 +20,7 @@ const MENU_BY_ROLE = {
   ],
   Admin: [
     { label: "Dashboard", path: "/admin", icon: "grid" },
+    { label: "Tickets", path: "/tickets", icon: "ticket" },
     { label: "Users", path: "/users", icon: "users" },
     { label: "Departments", path: "/departments", icon: "building" },
     { label: "Reports", path: "/reports", icon: "chart" },

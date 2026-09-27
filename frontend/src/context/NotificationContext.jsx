@@ -1,16 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useMemo, useState } from 'react'
 
-const INITIAL_NOTIFICATIONS = [
-	{ id: 1, text: 'New ticket created: TCK-045', time: '2m ago', read: false },
-	{ id: 2, text: 'Ticket assigned to you: TCK-038', time: '1h ago', read: false },
-	{ id: 3, text: 'Ticket TCK-020 marked resolved', time: 'Yesterday', read: false },
-]
-
 const NotificationContext = createContext(null)
 
 export function NotificationProvider({ children }) {
-	const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
+	const [notifications, setNotifications] = useState([])
 
 	const unreadCount = notifications.reduce(
 		(count, notification) => count + (notification.read ? 0 : 1),

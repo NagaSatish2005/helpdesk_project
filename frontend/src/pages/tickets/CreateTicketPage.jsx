@@ -7,13 +7,11 @@ const backendCategories = {
 	Hostel: 'HOSTEL',
 	Transport: 'TRANSPORT',
 	Fees: 'FEES',
-	It: 'IT',
 	IT: 'IT',
 	Facilities: 'FACILITIES',
 	Software: 'SOFTWARE',
 	Hardware: 'HARDWARE',
 	Network: 'NETWORK',
-	HR: 'HR',
 	Finance: 'FINANCE',
 }
 

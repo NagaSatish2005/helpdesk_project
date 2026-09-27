@@ -1,80 +1,114 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import useAuth from '../../hooks/useAuth'
+import api from '../../services/api'
 import styles from './EditProfilePage.module.css'
 
-const initialProfile = {
-  id: 'U-001',
-  fullName: 'Emma Wells',
-  email: 'emma.wells@example.com',
-  alternateEmail: 'emma.w@altmail.com',
-  phone: '555-123-4567',
-  department: 'Computer Science',
-  role: 'Student',
-  status: 'Active',
-  address: '123 University Ave, Campus City',
-  photoUrl: null,
+const NOT_AVAILABLE = 'Not available'
+
+const roleLabels = {
+  STUDENT: 'Student',
+  STAFF: 'Staff',
+  ADMIN: 'Admin',
+}
+
+function mapProfile(user) {
+  return {
+    id: user?.id ?? NOT_AVAILABLE,
+    fullName: user?.name || NOT_AVAILABLE,
+    email: user?.email || NOT_AVAILABLE,
+    role: roleLabels[String(user?.role || '').toUpperCase()] || user?.role || NOT_AVAILABLE,
+    created: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : NOT_AVAILABLE,
+    status: typeof user?.active === 'boolean' ? (user.active ? 'Active' : 'Inactive') : NOT_AVAILABLE,
+  }
+}
+
+function getErrorMessage(error, fallback) {
+  return error?.response?.data?.message || error?.message || fallback
 }
 
 export default function EditProfilePage() {
-  const [profile, setProfile] = useState(initialProfile)
-  const [preview, setPreview] = useState(initialProfile.photoUrl)
+  const { user } = useAuth()
+  const [profile, setProfile] = useState(null)
+  const [savedProfile, setSavedProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadingError, setLoadingError] = useState('')
   const [errors, setErrors] = useState({})
   const [message, setMessage] = useState(null)
+  const [saving, setSaving] = useState(false)
 
-  const validate = () => {
-    const newErrors = {}
+  useEffect(() => {
+    let isMounted = true
+    setLoading(true)
+    setLoadingError('')
 
-    if (!profile.fullName.trim()) newErrors.fullName = 'Full name is required.'
-    if (!profile.email.trim()) newErrors.email = 'Email is required.'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email))
-      newErrors.email = 'Enter a valid email address.'
+    api.get('/api/users/me')
+      .then((response) => {
+        if (!isMounted) return
+        const loadedProfile = mapProfile(response.data?.data)
+        setProfile(loadedProfile)
+        setSavedProfile(loadedProfile)
+      })
+      .catch((error) => {
+        if (isMounted) setLoadingError(getErrorMessage(error, 'Unable to load profile.'))
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false)
+      })
 
-    if (!profile.phone.trim()) newErrors.phone = 'Phone number is required.'
-    else if (!/^\d[\d\s\-()+]*$/.test(profile.phone))
-      newErrors.phone = 'Enter a valid phone number.'
-
-    if (!profile.department.trim()) newErrors.department = 'Department is required.'
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handlePhotoChange = (file) => {
-    if (!file) {
-      setPreview(null)
-      return
+    return () => {
+      isMounted = false
     }
-    const reader = new FileReader()
-    reader.onload = () => setPreview(reader.result)
-    reader.readAsDataURL(file)
-  }
+  }, [user?.id])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setMessage(null)
+    const name = profile.fullName.trim()
 
-    if (!validate()) {
+    if (!name) {
+      setErrors({ fullName: 'Full name is required.' })
       setMessage({ type: 'error', text: 'Please fix form errors before saving.' })
       return
     }
 
-    setMessage({ type: 'success', text: 'Profile updated successfully (demo).' })
+    setSaving(true)
+    setErrors({})
+
+    try {
+      const response = await api.patch('/api/users/me', { name })
+      const updatedProfile = mapProfile(response.data?.data)
+      setProfile(updatedProfile)
+      setSavedProfile(updatedProfile)
+      setMessage({ type: 'success', text: 'Profile updated successfully.' })
+    } catch (error) {
+      setMessage({ type: 'error', text: getErrorMessage(error, 'Unable to update profile.') })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleCancel = () => {
-    setProfile(initialProfile)
-    setPreview(initialProfile.photoUrl)
+    setProfile(savedProfile)
     setErrors({})
     setMessage(null)
   }
 
   const hasError = (field) => Boolean(errors[field])
 
+  if (loading) {
+    return <div className={styles.container}><p>Loading profile...</p></div>
+  }
+
+  if (!profile) {
+    return <div className={styles.container}><p>{loadingError || 'Unable to load profile.'}</p></div>
+  }
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
           <h1>Edit Profile</h1>
-          <p>Update your personal details, contact information, and profile photo.</p>
+          <p>Update your name and review your account details.</p>
         </div>
       </header>
 
@@ -97,44 +131,23 @@ export default function EditProfilePage() {
             </div>
             <div className={styles.field}>
               <label>Email address</label>
-              <input
-                value={profile.email}
-                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                className={hasError('email') ? styles.invalid : ''}
-              />
-              {errors.email && <div className={styles.error}>{errors.email}</div>}
+              <input value={profile.email} disabled />
             </div>
             <div className={styles.field}>
               <label>Phone number</label>
-              <input
-                value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                className={hasError('phone') ? styles.invalid : ''}
-              />
-              {errors.phone && <div className={styles.error}>{errors.phone}</div>}
+              <input value={NOT_AVAILABLE} disabled />
             </div>
             <div className={styles.field}>
               <label>Alternate email</label>
-              <input
-                value={profile.alternateEmail}
-                onChange={(e) => setProfile({ ...profile, alternateEmail: e.target.value })}
-              />
+              <input value={NOT_AVAILABLE} disabled />
             </div>
             <div className={styles.field}>
               <label>Department</label>
-              <input
-                value={profile.department}
-                onChange={(e) => setProfile({ ...profile, department: e.target.value })}
-                className={hasError('department') ? styles.invalid : ''}
-              />
-              {errors.department && <div className={styles.error}>{errors.department}</div>}
+              <input value={NOT_AVAILABLE} disabled />
             </div>
             <div className={styles.field}>
               <label>Address (optional)</label>
-              <input
-                value={profile.address}
-                onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-              />
+              <input value={NOT_AVAILABLE} disabled />
             </div>
           </div>
         </section>
@@ -143,20 +156,16 @@ export default function EditProfilePage() {
           <h2>Profile picture</h2>
           <div className={styles.photoRow}>
             <div className={styles.photoPreview}>
-              {preview ? (
-                <img src={preview} alt="Preview" />
-              ) : (
-                <div className={styles.photoPlaceholder}>{profile.fullName[0]}</div>
-              )}
+              <div className={styles.photoPlaceholder}>{profile.fullName[0] || '?'}</div>
             </div>
             <div className={styles.photoControls}>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => handlePhotoChange(e.target.files?.[0])}
+                disabled
               />
-              <button type="button" className={styles.secondary} onClick={() => handlePhotoChange(null)}>
-                Remove
+              <button type="button" className={styles.secondary} disabled>
+                {NOT_AVAILABLE}
               </button>
             </div>
           </div>
@@ -177,18 +186,23 @@ export default function EditProfilePage() {
               <label>Status</label>
               <input value={profile.status} disabled />
             </div>
+            <div className={styles.field}>
+              <label>Created</label>
+              <input value={profile.created} disabled />
+            </div>
           </div>
         </section>
 
         <section className={styles.section}>
           <h2>Contact preferences</h2>
+          <p>{NOT_AVAILABLE}: preferences are not currently supported.</p>
           <div className={styles.checkboxGroup}>
             <label>
-              <input type="checkbox" />
+              <input type="checkbox" disabled />
               Receive email updates
             </label>
             <label>
-              <input type="checkbox" />
+              <input type="checkbox" disabled />
               Receive SMS alerts
             </label>
           </div>
@@ -198,8 +212,8 @@ export default function EditProfilePage() {
           <button type="button" className={styles.secondary} onClick={handleCancel}>
             Cancel
           </button>
-          <button type="submit" className={styles.primary}>
-            Save changes
+          <button type="submit" className={styles.primary} disabled={saving}>
+            {saving ? 'Saving...' : 'Save changes'}
           </button>
         </section>
       </form>

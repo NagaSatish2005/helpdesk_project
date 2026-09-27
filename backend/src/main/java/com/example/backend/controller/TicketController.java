@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,15 +39,23 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<TicketResponse>> getTicket(@PathVariable Long id) {
-        TicketResponse response = ticketService.getTicketById(id);
-        return ResponseEntity
-                .ok()
-                .body(new ApiResponse<>(
-                        true,
-                        "Ticket retrieved successfully",
-                        response
-                ));
+    public ResponseEntity<ApiResponse<TicketResponse>> getTicket(
+            @PathVariable Long id,
+            Authentication authentication) {
+        try {
+            TicketResponse response = ticketService.getTicketById(id, authentication);
+            return ResponseEntity
+                    .ok()
+                    .body(new ApiResponse<>(
+                            true,
+                            "Ticket retrieved successfully",
+                            response
+                    ));
+        } catch (AccessDeniedException exception) {
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(new ApiResponse<>(false, exception.getMessage(), null));
+        }
     }
 
     @PatchMapping("/{id}")
@@ -61,21 +70,23 @@ public class TicketController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TicketResponse>>> getAllTickets() {
+    public ResponseEntity<ApiResponse<List<TicketResponse>>> getAllTickets(
+            Authentication authentication) {
         return ResponseEntity.ok(new ApiResponse<>(
                 true,
                 "Tickets retrieved successfully",
-                ticketService.getAllTickets()
+                ticketService.getTicketsForAuthenticatedUser(authentication)
         ));
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<List<TicketResponse>>> getTicketsByUser(
-            @PathVariable Long userId) {
+            @PathVariable Long userId,
+            Authentication authentication) {
         return ResponseEntity.ok(new ApiResponse<>(
                 true,
                 "User tickets retrieved successfully",
-                ticketService.getTicketsByUser(userId)
+                ticketService.getTicketsByUser(userId, authentication)
         ));
     }
 }

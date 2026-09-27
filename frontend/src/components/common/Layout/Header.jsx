@@ -76,7 +76,9 @@ export default function Header({ onToggleSidebar }) {
 				{isNotifOpen && (
 					<div className={`${styles.dropdown} ${styles.notificationDropdown}`}>
 						<div className={styles.dropdownHeader}>Notifications</div>
-						{notifications.map((n) => (
+						{notifications.length === 0 ? (
+							<div className={styles.dropdownItem}>No new notifications</div>
+						) : notifications.map((n) => (
 							<div key={n.id} className={styles.dropdownItem}>
 								<span>{n.text}</span>
 								<span style={{ fontSize: 12, color: '#6b7280' }}>{n.time}</span>
@@ -95,10 +97,10 @@ export default function Header({ onToggleSidebar }) {
 				</button>
 				{isProfileOpen && (
 					<div className={`${styles.dropdown} ${styles.profileDropdown}`}>
-						<div className={styles.dropdownItem} onClick={() => alert('View profile')}>
+						<div className={styles.dropdownItem} onClick={() => { navigate('/profile'); setIsProfileOpen(false) }}>
 							<span>View Profile</span>
 						</div>
-						<div className={styles.dropdownItem} onClick={() => alert('Settings')}>
+						<div className={styles.dropdownItem} onClick={() => { navigate('/settings'); setIsProfileOpen(false) }}>
 							<span>Settings</span>
 						</div>
 						<div className={styles.dropdownItem} onClick={handleLogout}>

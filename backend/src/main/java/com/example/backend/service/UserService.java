@@ -5,11 +5,17 @@ import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.example.backend.dto.request.ChangePasswordRequest;
 import com.example.backend.dto.request.CreateStaffRequest;
 import com.example.backend.dto.request.UpdateUserRequest;
+import com.example.backend.model.Ticket;
 import com.example.backend.model.User;
 import com.example.backend.model.enums.UserRole;
+import com.example.backend.repository.AttachmentRepository;
+import com.example.backend.repository.CommentRepository;
+import com.example.backend.repository.TicketRepository;
 import com.example.backend.repository.UserRepository;
 
 @Service
@@ -17,10 +23,21 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AttachmentRepository attachmentRepository;
+    private final CommentRepository commentRepository;
+    private final TicketRepository ticketRepository;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AttachmentRepository attachmentRepository,
+            CommentRepository commentRepository,
+            TicketRepository ticketRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.attachmentRepository = attachmentRepository;
+        this.commentRepository = commentRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     public User createUser(User user) {
@@ -50,6 +67,22 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    public void changePassword(String userEmail, ChangePasswordRequest request) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("New password and confirmation must match");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
@@ -71,6 +104,9 @@ public class UserService {
         user.setName(request.getName());
         user.setEmail(request.getEmail());
         user.setRole(request.getRole());
+        if (request.getRole() != UserRole.STAFF) {
+            user.setDepartment(null);
+        }
 
         return userRepository.save(user);
     }
@@ -83,12 +119,33 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public void deleteUser(Long id) {
-		if (!userRepository.existsById(id)) {
-			throw new IllegalArgumentException("User not found");
-		}
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        userRepository.deleteById(id);
+        List<Ticket> requestedTickets = ticketRepository.findByRequesterId(id);
+        List<Ticket> assignedTickets = ticketRepository.findByAssignedToId(id);
+
+        assignedTickets.forEach(ticket -> ticket.setAssignedTo(null));
+        ticketRepository.saveAll(assignedTickets);
+        ticketRepository.flush();
+
+        attachmentRepository.deleteAll(attachmentRepository.findByUploadedById(id));
+        commentRepository.deleteAll(commentRepository.findByAuthorId(id));
+        attachmentRepository.flush();
+        commentRepository.flush();
+
+        requestedTickets.forEach(ticket -> {
+            attachmentRepository.deleteAll(attachmentRepository.findByTicketIdOrderByUploadedAtAsc(ticket.getId()));
+            commentRepository.deleteAll(commentRepository.findByTicket(ticket));
+            ticketRepository.delete(ticket);
+        });
+        user.setDepartment(null);
+        userRepository.save(user);
+        userRepository.flush();
+
+        userRepository.delete(user);
     }
 
     public boolean existsByEmail(String email) {

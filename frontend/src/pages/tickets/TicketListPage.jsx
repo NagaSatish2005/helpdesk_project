@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import useTickets from '../../hooks/useTickets'
 import styles from './TicketListPage.module.css'
 
 export default function TicketListPage() {
+	const navigate = useNavigate()
 	const [filter, setFilter] = useState('All')
 	const { tickets: sourceTickets } = useTickets()
 	const tickets = sourceTickets.map((ticket) => ({
@@ -31,6 +33,7 @@ export default function TicketListPage() {
 					<tr>
 						<th>ID</th>
 						<th>Subject</th>
+						<th>Assigned Staff</th>
 						<th>Status</th>
 						<th>Actions</th>
 					</tr>
@@ -40,14 +43,15 @@ export default function TicketListPage() {
 						<tr key={t.id}>
 							<td>{t.id}</td>
 							<td>{t.subject}</td>
+							<td>{t.assignedTo?.name || 'Unassigned'}</td>
 							<td>
 								<span className={`${styles.status} ${styles[t.status.replace(/\s+/g, '')]}`}>{t.status}</span>
 							</td>
 							<td className={styles.actions}>
-								<button className={styles.view} onClick={() => alert('View')}>
+								<button className={styles.view} onClick={() => navigate(`/tickets/${t.id}`)}>
 									View
 								</button>
-								<button className={styles.edit} onClick={() => alert('Edit')}>
+								<button className={styles.edit} onClick={() => navigate(`/tickets/${t.id}`)}>
 									Edit
 								</button>
 								<button className={styles.delete} onClick={() => alert('Delete')}>

@@ -1,79 +1,132 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import useAuth from '../../hooks/useAuth'
+import useTickets from '../../hooks/useTickets'
+import api from '../../services/api'
 import styles from './ProfilePage.module.css'
 
-const sampleProfile = {
-  id: 'U-001',
-  fullName: 'Emma Wells',
-  email: 'emma.wells@example.com',
-  phone: '555-123-4567',
-  role: 'Student',
-  department: 'Computer Science',
-  status: 'Active',
-  created: '2025-09-12',
-  photoUrl: null,
-  ticketActivity: {
-    total: 18,
-    open: 3,
-    resolved: 13,
-    recent: [
-      { id: 'T-017', title: 'Campus Wi-Fi issue' },
-      { id: 'T-015', title: 'Password reset not working' },
-      { id: 'T-011', title: 'Classroom projector request' },
-    ],
-  },
-  notifications: {
-    email: true,
-    inApp: true,
-    ticketUpdates: true,
-  },
+const NOT_AVAILABLE = 'Not available'
+
+const roleLabels = {
+  STUDENT: 'Student',
+  STAFF: 'Staff',
+  ADMIN: 'Admin',
+}
+
+function mapRole(role) {
+  return roleLabels[String(role || '').toUpperCase()] || role || NOT_AVAILABLE
+}
+
+function mapProfile(user) {
+  return {
+    id: user?.id ?? NOT_AVAILABLE,
+    fullName: user?.name || NOT_AVAILABLE,
+    email: user?.email || NOT_AVAILABLE,
+    role: mapRole(user?.role),
+    created: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : NOT_AVAILABLE,
+  }
+}
+
+function getTicketId(ticket) {
+  return ticket?.id ?? ticket?._id ?? ticket?.ticketId
+}
+
+function getErrorMessage(error, fallback) {
+  return error?.response?.data?.message || error?.message || fallback
 }
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(sampleProfile)
+  const { logout } = useAuth()
+  const { tickets, loading: ticketsLoading, error: ticketsError } = useTickets()
+  const [profile, setProfile] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileError, setProfileError] = useState('')
   const [editMode, setEditMode] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [saveMessage, setSaveMessage] = useState('')
   const [passwordForm, setPasswordForm] = useState({
     current: '',
     next: '',
     confirm: '',
   })
+  const [notifications, setNotifications] = useState({
+    email: true,
+    inApp: true,
+    ticketUpdates: true,
+  })
 
-  const [photoPreview, setPhotoPreview] = useState(profile.photoUrl)
+  useEffect(() => {
+    let isMounted = true
 
-  const ticketActivity = useMemo(() => profile.ticketActivity, [profile])
+    api.get('/api/users/me')
+      .then((response) => {
+        if (!isMounted) return
+        const loadedProfile = mapProfile(response.data?.data)
+        setProfile(loadedProfile)
+        setEditName(loadedProfile.fullName === NOT_AVAILABLE ? '' : loadedProfile.fullName)
+        setProfileError('')
+      })
+      .catch((error) => {
+        if (isMounted) setProfileError(getErrorMessage(error, 'Unable to load profile.'))
+      })
+      .finally(() => {
+        if (isMounted) setProfileLoading(false)
+      })
 
-  const handlePhotoChange = (file) => {
-    if (!file) {
-      setPhotoPreview(null)
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const ticketActivity = useMemo(() => {
+    const resolvedTickets = tickets.filter((ticket) => ['Resolved', 'Closed'].includes(ticket.status))
+    const recent = tickets.slice(0, 3)
+
+    return {
+      total: tickets.length,
+      open: tickets.length - resolvedTickets.length,
+      resolved: resolvedTickets.length,
+      recent,
+    }
+  }, [tickets])
+
+  const handleSaveProfile = async () => {
+    const name = editName.trim()
+    if (!name) {
+      setSaveError('Name is required.')
+      setSaveMessage('')
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => setPhotoPreview(reader.result)
-    reader.readAsDataURL(file)
-  }
 
-  const handleSaveProfile = () => {
-    setEditMode(false)
-    alert('Profile saved (demo).')
-  }
+    setSavingProfile(true)
+    setSaveError('')
+    setSaveMessage('')
 
-  const handleChangePassword = () => {
-    if (passwordForm.next !== passwordForm.confirm) {
-      alert('New password and confirmation must match.')
-      return
+    try {
+      const response = await api.patch('/api/users/me', { name })
+      const updatedProfile = mapProfile(response.data?.data)
+      setProfile(updatedProfile)
+      setEditName(updatedProfile.fullName === NOT_AVAILABLE ? '' : updatedProfile.fullName)
+      setEditMode(false)
+      setSaveMessage('Profile updated successfully.')
+    } catch (error) {
+      setSaveError(getErrorMessage(error, 'Unable to update profile.'))
+    } finally {
+      setSavingProfile(false)
     }
-    setPasswordForm({ current: '', next: '', confirm: '' })
-    alert('Password updated (demo).')
   }
 
   const toggleNotification = (key) => {
-    setProfile((prev) => ({
-      ...prev,
-      notifications: { ...prev.notifications, [key]: !prev.notifications[key] },
-    }))
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const handleLogout = () => {
-    alert('Logged out (demo).')
+  if (profileLoading) {
+    return <div className={styles.container}><p>Loading profile...</p></div>
+  }
+
+  if (!profile) {
+    return <div className={styles.container}><p>{profileError || 'Unable to load profile.'}</p></div>
   }
 
   return (
@@ -83,7 +136,7 @@ export default function ProfilePage() {
           <h1>My Profile</h1>
           <p>Review and update your account details, security settings, and notification preferences.</p>
         </div>
-        <button className={styles.secondary} onClick={handleLogout}>
+        <button className={styles.secondary} onClick={logout}>
           Logout
         </button>
       </header>
@@ -92,16 +145,12 @@ export default function ProfilePage() {
         <section className={styles.card}>
           <div className={styles.profileHeader}>
             <div className={styles.avatarWrapper}>
-              {photoPreview ? (
-                <img src={photoPreview} alt="Profile" className={styles.avatar} />
-              ) : (
-                <div className={styles.avatarPlaceholder}>{profile.fullName[0]}</div>
-              )}
+              <div className={styles.avatarPlaceholder}>{profile.fullName[0] || '?'}</div>
             </div>
             <div className={styles.profileMeta}>
               <div className={styles.profileName}>{profile.fullName}</div>
               <div className={styles.profileRole}>{profile.role}</div>
-              <div className={styles.profileSub}>{profile.department}</div>
+              <div className={styles.profileSub}>{NOT_AVAILABLE}</div>
             </div>
           </div>
 
@@ -114,7 +163,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <span className={styles.label}>Status</span>
-                <div>{profile.status}</div>
+                <div>{NOT_AVAILABLE}</div>
               </div>
               <div>
                 <span className={styles.label}>Created</span>
@@ -129,6 +178,8 @@ export default function ProfilePage() {
 
           <div className={styles.section}>
             <h2>Ticket activity</h2>
+            {ticketsLoading ? <p>Loading ticket activity...</p> : null}
+            {ticketsError ? <p role="alert">{ticketsError}</p> : null}
             <div className={styles.statsGrid}>
               <div>
                 <div className={styles.statValue}>{ticketActivity.total}</div>
@@ -148,8 +199,8 @@ export default function ProfilePage() {
               <h3>Recent tickets</h3>
               <ul>
                 {ticketActivity.recent.map((ticket) => (
-                  <li key={ticket.id}>
-                    <strong>{ticket.id}</strong> — {ticket.title}
+                  <li key={getTicketId(ticket)}>
+                    <strong>{getTicketId(ticket) ?? NOT_AVAILABLE}</strong> — {ticket.title || NOT_AVAILABLE}
                   </li>
                 ))}
               </ul>
@@ -160,16 +211,28 @@ export default function ProfilePage() {
         <section className={styles.card}>
           <div className={styles.sectionHeader}>
             <h2>Profile details</h2>
-            <button className={styles.secondary} onClick={() => setEditMode((v) => !v)}>
+            <button
+              className={styles.secondary}
+              onClick={() => {
+                setEditMode((value) => !value)
+                setEditName(profile.fullName === NOT_AVAILABLE ? '' : profile.fullName)
+                setSaveError('')
+                setSaveMessage('')
+              }}
+              disabled={savingProfile}
+            >
               {editMode ? 'Cancel' : 'Edit'}
             </button>
           </div>
 
+          {saveMessage ? <p role="status">{saveMessage}</p> : null}
+          {saveError ? <p role="alert">{saveError}</p> : null}
+
           <div className={styles.formGroup}>
             <label>Full name</label>
             <input
-              value={profile.fullName}
-              onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
+              value={editMode ? editName : profile.fullName}
+              onChange={(e) => setEditName(e.target.value)}
               disabled={!editMode}
             />
           </div>
@@ -181,46 +244,22 @@ export default function ProfilePage() {
 
           <div className={styles.formGroup}>
             <label>Phone</label>
-            <input
-              value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              disabled={!editMode}
-            />
+            <input value={NOT_AVAILABLE} disabled />
           </div>
 
           <div className={styles.formGroup}>
             <label>Department</label>
-            <input
-              value={profile.department}
-              onChange={(e) => setProfile({ ...profile, department: e.target.value })}
-              disabled={!editMode}
-            />
+            <input value={NOT_AVAILABLE} disabled />
           </div>
 
           <div className={styles.formGroup}>
             <label>Profile photo</label>
-            <div className={styles.photoActions}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handlePhotoChange(e.target.files?.[0])}
-                disabled={!editMode}
-              />
-              {photoPreview && (
-                <button
-                  className={styles.secondary}
-                  onClick={() => handlePhotoChange(null)}
-                  disabled={!editMode}
-                >
-                  Remove
-                </button>
-              )}
-            </div>
+            <input value={NOT_AVAILABLE} disabled />
           </div>
 
           {editMode && (
-            <button className={styles.primary} onClick={handleSaveProfile}>
-              Save changes
+            <button className={styles.primary} onClick={handleSaveProfile} disabled={savingProfile}>
+              {savingProfile ? 'Saving...' : 'Save changes'}
             </button>
           )}
 
@@ -230,12 +269,15 @@ export default function ProfilePage() {
             <h2>Change password</h2>
           </div>
 
+          <p>{NOT_AVAILABLE}: password changes are not implemented yet.</p>
+
           <div className={styles.formGroup}>
             <label>Current password</label>
             <input
               type="password"
               value={passwordForm.current}
               onChange={(e) => setPasswordForm((p) => ({ ...p, current: e.target.value }))}
+              disabled
             />
           </div>
 
@@ -245,6 +287,7 @@ export default function ProfilePage() {
               type="password"
               value={passwordForm.next}
               onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
+              disabled
             />
           </div>
 
@@ -254,11 +297,12 @@ export default function ProfilePage() {
               type="password"
               value={passwordForm.confirm}
               onChange={(e) => setPasswordForm((p) => ({ ...p, confirm: e.target.value }))}
+              disabled
             />
           </div>
 
-          <button className={styles.primary} onClick={handleChangePassword}>
-            Update password
+          <button className={styles.primary} disabled>
+            Update password ({NOT_AVAILABLE})
           </button>
 
           <div className={styles.divider} />
@@ -271,7 +315,7 @@ export default function ProfilePage() {
             <label>
               <input
                 type="checkbox"
-                checked={profile.notifications.email}
+                checked={notifications.email}
                 onChange={() => toggleNotification('email')}
               />
               Email notifications
@@ -279,7 +323,7 @@ export default function ProfilePage() {
             <label>
               <input
                 type="checkbox"
-                checked={profile.notifications.inApp}
+                checked={notifications.inApp}
                 onChange={() => toggleNotification('inApp')}
               />
               In-app notifications
@@ -287,7 +331,7 @@ export default function ProfilePage() {
             <label>
               <input
                 type="checkbox"
-                checked={profile.notifications.ticketUpdates}
+                checked={notifications.ticketUpdates}
                 onChange={() => toggleNotification('ticketUpdates')}
               />
               Ticket update alerts
@@ -300,14 +344,15 @@ export default function ProfilePage() {
             <h2>Security &amp; sessions</h2>
           </div>
 
-          <button className={styles.secondary} onClick={() => alert('Logout from all devices (demo).')}>
-            Logout from all devices
+          <p>{NOT_AVAILABLE}: security session management is not implemented yet.</p>
+          <button className={styles.secondary} disabled>
+            Logout from all devices ({NOT_AVAILABLE})
           </button>
-          <button className={styles.secondary} onClick={() => alert('View login activity (demo).')}>
-            View login activity
+          <button className={styles.secondary} disabled>
+            View login activity ({NOT_AVAILABLE})
           </button>
-          <button className={styles.secondary} onClick={() => alert('Enable two-factor authentication (demo).')}>
-            Enable two-factor authentication
+          <button className={styles.secondary} disabled>
+            Enable two-factor authentication ({NOT_AVAILABLE})
           </button>
         </section>
       </div>

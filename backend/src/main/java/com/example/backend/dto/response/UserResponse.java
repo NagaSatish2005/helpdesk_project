@@ -7,16 +7,31 @@ public class UserResponse {
     private String email;
     private String role;
     private boolean active;
+    private Long departmentId;
+    private String departmentName;
 
     public UserResponse() {
     }
 
     public UserResponse(Long id, String name, String email, String role, boolean active) {
+        this(id, name, email, role, active, null, null);
+        }
+
+        public UserResponse(
+            Long id,
+            String name,
+            String email,
+            String role,
+            boolean active,
+            Long departmentId,
+            String departmentName) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.role = role;
         this.active = active;
+        this.departmentId = departmentId;
+        this.departmentName = departmentName;
     }
 
     public Long getId() {
@@ -57,5 +72,13 @@ public class UserResponse {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
     }
 }

@@ -1,6 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import useAuth from '../../hooks/useAuth'
 import useTickets from '../../hooks/useTickets'
+import api from '../../services/api'
 import styles from './StaffDashboard.module.css'
 import {
 	Chart as ChartJS,
@@ -25,9 +27,31 @@ function getCategoryLabel(category) {
 
 export default function StaffDashboard() {
 	const navigate = useNavigate()
+	const { user } = useAuth()
 	const { tickets, updateTicket } = useTickets()
+	const [departmentName, setDepartmentName] = useState('Unassigned')
 	const [resolvingTicketId, setResolvingTicketId] = useState(null)
 	const [resolveError, setResolveError] = useState('')
+
+	useEffect(() => {
+		if (String(user?.role || '').toUpperCase() !== 'STAFF') {
+			setDepartmentName('Unassigned')
+			return undefined
+		}
+
+		let isMounted = true
+		api.get('/api/users/me')
+			.then((response) => {
+				if (isMounted) setDepartmentName(response.data?.data?.departmentName || 'Unassigned')
+			})
+			.catch(() => {
+				if (isMounted) setDepartmentName('Unassigned')
+			})
+
+		return () => {
+			isMounted = false
+		}
+	}, [user?.role])
 	const assignedTickets = tickets.filter((ticket) => ticket.assignedTo != null)
 	const resolvedTickets = tickets.filter((ticket) => ['Resolved', 'Closed'].includes(ticket.status))
 	const inProgressTickets = tickets.filter((ticket) => ticket.status === 'In Progress')
@@ -94,7 +118,7 @@ export default function StaffDashboard() {
 		<div className={styles.container}>
 			<div className={styles.header}>
 				<h1>Staff Dashboard</h1>
-				<p>Department: IT Support</p>
+				<p>Department: {departmentName}</p>
 			</div>
 
 			<div className={styles.summary}>

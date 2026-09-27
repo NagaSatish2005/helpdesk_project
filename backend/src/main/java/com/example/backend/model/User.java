@@ -25,6 +25,10 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean active = true;
 
@@ -94,6 +98,14 @@ public class User {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
     public boolean isActive() {

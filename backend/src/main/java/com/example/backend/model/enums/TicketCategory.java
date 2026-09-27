@@ -8,7 +8,5 @@ public enum TicketCategory {
     FACILITIES,
     SOFTWARE,
     HARDWARE,
-    NETWORK,
-    HR,
-    FINANCE
+    NETWORK
 }
