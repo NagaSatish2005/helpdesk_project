@@ -1,5 +1,5 @@
 import Card from '../common/UI/Card'
-import Badge from '../common/UI/badge'
+import Badge from '../common/UI/Badge'
 import LoadingSpinner from '../common/UI/LoadingSpinner'
 import Alert from '../common/UI/Alert'
 

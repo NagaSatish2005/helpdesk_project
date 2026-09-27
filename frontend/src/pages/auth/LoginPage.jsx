@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Card from '../../components/common/UI/Card'
-import LoginForm from '../../components/common/Forms/LoginForm'
+import LoginForm from '../../components/common/forms/LoginForm'
 import useAuth from '../../hooks/useAuth'
 import logo from '../../assets/logo.png'
 import styles from './LoginPage.module.css'

@@ -1,6 +1,6 @@
 import React from 'react'
 import Card from '../common/UI/Card'
-import Badge from '../common/UI/badge'
+import Badge from '../common/UI/Badge'
 
 import styles from './TicketCard.module.css'
 
